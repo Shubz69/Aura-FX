@@ -20,6 +20,7 @@ const {
   parseJsonArray,
   num,
 } = require('./backtesting/analytics');
+const { toCanonical } = require('./ai/utils/symbol-registry');
 
 const EPS = 1e-8;
 
@@ -351,6 +352,117 @@ function timeframeToChartInterval(tf) {
   if (raw === 'MN1' || raw === '1M') return '1M';
   if (raw === 'Y1' || raw === '1Y') return '1Y';
   return '1D';
+}
+
+const BACKTEST_CANDLE_TIMEFRAMES = new Set(['M1', 'M5', 'M15', 'M30', 'M45', 'H1', 'H4', 'D1', 'W1', 'MN1', 'Y1']);
+
+function normalizeBacktestCandleTimeframe(tf) {
+  const raw = String(tf || 'M15').trim().toUpperCase();
+  return BACKTEST_CANDLE_TIMEFRAMES.has(raw) ? raw : null;
+}
+
+async function fetchInternalChartHistory({ baseUrl, authHeader, symbol, interval, fromSec, toSec }) {
+  const res = await axios.get(`${baseUrl}/api/market/chart-history`, {
+    params: { symbol, interval, from: fromSec, to: toSec },
+    headers: { Authorization: authHeader || '' },
+    timeout: 12000,
+    validateStatus: () => true,
+  });
+  const data = res.data && typeof res.data === 'object' ? res.data : {};
+  const bars = Array.isArray(data.bars) ? data.bars : [];
+  return { httpStatus: res.status, data, bars, diagnostics: data.diagnostics || null };
+}
+
+/**
+ * Chart-history can legitimately return an empty window (weekend anchor, tight range, provider gaps).
+ * Widen / slide the window server-side so replay still receives usable context bars.
+ */
+async function loadBacktestCandlesWithFallback({ baseUrl, authHeader, requestSymbol, interval, fromSec, toSec }) {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const capTo = (t) => Math.min(Math.floor(Number(t)), nowSec);
+  let f0 = Math.floor(Number(fromSec));
+  let t0 = capTo(toSec);
+  if (!Number.isFinite(f0) || !Number.isFinite(t0) || t0 <= f0) {
+    return { bars: [], attemptLog: [{ tag: 'invalid', error: 'from/to must be unix seconds with to > from' }], lastDiagnostics: null };
+  }
+  if (t0 - f0 < 1800) t0 = f0 + 14 * 86400;
+
+  const attempts = [];
+  const push = (f, t, tag) => {
+    const ff = Math.max(0, Math.floor(f));
+    const tt = capTo(Math.max(ff + 300, Math.floor(t)));
+    attempts.push({ from: ff, to: tt, tag });
+  };
+
+  push(f0, t0, 'original');
+  push(f0 - 120 * 86400, Math.max(t0, f0 + 45 * 86400), 'widen_120d_back_45d_fwd');
+  push(f0 - 10 * 86400, f0 + 90 * 86400, 'anchor_back_extend_forward');
+
+  let slideF = f0;
+  let slideT = t0;
+  for (let i = 0; i < 3; i += 1) {
+    slideF -= 2 * 86400;
+    slideT -= 2 * 86400;
+    if (slideT > slideF + 300) push(slideF, slideT, `shift_back_${i + 1}`);
+  }
+
+  const seen = new Set();
+  const attemptLog = [];
+  let bestBars = [];
+  let bestDiag = null;
+
+  for (const a of attempts) {
+    const key = `${a.from}|${a.to}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    const got = await fetchInternalChartHistory({
+      baseUrl,
+      authHeader,
+      symbol: requestSymbol,
+      interval,
+      fromSec: a.from,
+      toSec: a.to,
+    });
+    const n = got.bars.length;
+    attemptLog.push({
+      tag: a.tag,
+      from: a.from,
+      to: a.to,
+      httpStatus: got.httpStatus,
+      barCount: n,
+      chartSuccess: Boolean(got.data.success),
+      message: got.data.message || null,
+      providerError: got.diagnostics?.error || null,
+      twelveDataSymbol: got.diagnostics?.twelveDataSymbol || null,
+    });
+
+    if (n > bestBars.length) {
+      bestBars = got.bars;
+      bestDiag = got.diagnostics;
+    }
+    if (n >= 32) break;
+  }
+
+  if (!bestBars.length) {
+    console.warn('[backtesting/candles] empty_after_fallback', { symbol: requestSymbol, interval, attemptLog });
+  } else if (bestBars.length < 12) {
+    console.warn('[backtesting/candles] sparse_bars', {
+      symbol: requestSymbol,
+      interval,
+      barCount: bestBars.length,
+      firstAttempts: attemptLog.slice(0, 4),
+    });
+  }
+
+  const byTime = new Map();
+  for (const b of bestBars) {
+    const t = Number(b?.time);
+    if (!Number.isFinite(t)) continue;
+    byTime.set(t, b);
+  }
+  const merged = [...byTime.values()].sort((a, b) => a.time - b.time);
+  return { bars: merged, attemptLog, lastDiagnostics: bestDiag };
 }
 
 function buildAiCoaching(context) {
@@ -812,28 +924,55 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET' && pathname === '/api/backtesting/candles') {
       const url = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
-      const symbol = String(url.searchParams.get('symbol') || '').trim().toUpperCase();
-      const timeframe = String(url.searchParams.get('timeframe') || 'M15');
+      const rawSymbol = String(url.searchParams.get('symbol') || '').trim();
+      const timeframeRaw = String(url.searchParams.get('timeframe') || 'M15').trim();
       const from = url.searchParams.get('from');
       const to = url.searchParams.get('to');
-      if (!symbol) return res.status(400).json({ success: false, message: 'symbol is required' });
+      if (!rawSymbol) return res.status(400).json({ success: false, message: 'symbol is required' });
+      const tfNorm = normalizeBacktestCandleTimeframe(timeframeRaw);
+      if (!tfNorm) {
+        return res.status(400).json({
+          success: false,
+          message: `Unsupported timeframe "${timeframeRaw}". Use one of: ${[...BACKTEST_CANDLE_TIMEFRAMES].join(', ')}`,
+        });
+      }
+      const canonical = toCanonical(rawSymbol);
+      if (!canonical || String(canonical).length < 2 || String(canonical).length > 72) {
+        return res.status(400).json({ success: false, message: 'Invalid or unknown symbol' });
+      }
+      const requestSymbol = String(canonical).toUpperCase();
+      const fromN = Number(from);
+      const toN = Number(to);
+      if (!Number.isFinite(fromN) || !Number.isFinite(toN)) {
+        return res.status(400).json({ success: false, message: 'from and to must be unix epoch seconds' });
+      }
+      if (fromN >= toN) {
+        return res.status(400).json({ success: false, message: 'to must be greater than from' });
+      }
       const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
       const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').trim();
       const baseUrl = `${proto}://${host}`;
-      const interval = timeframeToChartInterval(timeframe);
-      const { data } = await axios.get(`${baseUrl}/api/market/chart-history`, {
-        params: { symbol, interval, ...(from ? { from } : {}), ...(to ? { to } : {}) },
-        headers: { Authorization: req.headers.authorization || '' },
-        timeout: 20000,
+      const interval = timeframeToChartInterval(tfNorm);
+      const { bars, attemptLog, lastDiagnostics } = await loadBacktestCandlesWithFallback({
+        baseUrl,
+        authHeader: req.headers.authorization || '',
+        requestSymbol,
+        interval,
+        fromSec: fromN,
+        toSec: toN,
       });
       return res.status(200).json({
-        success: Boolean(data?.success),
-        symbol,
-        timeframe,
+        success: bars.length > 0,
+        symbol: requestSymbol,
+        requestedSymbol: rawSymbol.toUpperCase(),
+        timeframe: tfNorm,
         interval,
-        bars: Array.isArray(data?.bars) ? data.bars : [],
-        source: data?.source || data?.diagnostics?.provider || 'market-chart-history',
-        diagnostics: data?.diagnostics || null,
+        bars,
+        source: lastDiagnostics?.providerUsed || lastDiagnostics?.selectedProvider || 'market-chart-history',
+        diagnostics: {
+          ...(lastDiagnostics || {}),
+          backtestingCandleAttempts: attemptLog,
+        },
       });
     }
 

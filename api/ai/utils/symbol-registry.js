@@ -42,6 +42,9 @@ const CANONICAL_EQUIVALENTS = {
   DJI: 'DJI',
   '^DJI': 'DJI',
   DOW: 'DJI',
+  US30: 'DJI',
+  US500: 'SPX',
+  SPX500: 'SPX',
   DAX: 'DAX',
   '^GDAXI': 'DAX',
   GOLD: 'XAUUSD',
@@ -248,6 +251,7 @@ function getAssetClass(canonical) {
   if (/\.BCXE$/i.test(c)) return 'stock';
   if (/\.L$/i.test(c)) return 'stock';
   if (resolveVentureMarketDef(c)) return 'stock';
+  if (c === 'XAUUSD' || c === 'XAGUSD') return 'commodity';
   if (/^[A-Z]{6}$/.test(c)) return 'forex';
   return 'stock';
 }

@@ -11,7 +11,7 @@
  */
 
 const axios = require('axios');
-const { toCanonical, forProvider } = require('../ai/utils/symbol-registry');
+const { toCanonical, forProvider, getAssetClass } = require('../ai/utils/symbol-registry');
 
 const REQUEST_TIMEOUT = 12000;
 const TD_USAGE_TTL_MS = Math.max(5 * 60_000, parseInt(process.env.TWELVE_DATA_USAGE_CACHE_MS || '900000', 10) || 900000);
@@ -840,9 +840,12 @@ function sanitizeBarsForScale(bars, canonical) {
   let removedOutlierBars = 0;
   const closes = [];
   const c = String(canonical || '').toUpperCase();
-  const isFx = /^[A-Z]{6}$/.test(c);
-  const isJpyFx = isFx && /JPY/.test(c);
+  const assetClass = getAssetClass(c);
+  /** G10-style FX only — not spot metals (XAUUSD trades ~2000–5000) or generic 6-letter codes. */
+  const isFxMajor = /^[A-Z]{6}$/.test(c) && assetClass === 'forex';
+  const isJpyFx = isFxMajor && /JPY/.test(c);
   const isCrypto = /^(BTC|ETH|SOL|ADA|XRP|LTC|DOGE)/.test(c);
+  const isCommoditySpot = assetClass === 'commodity' && (c === 'XAUUSD' || c === 'XAGUSD');
 
   for (const b of list) {
     const t = Number(b?.time);
@@ -854,7 +857,7 @@ function sanitizeBarsForScale(bars, canonical) {
       removedInvalidBars += 1;
       continue;
     }
-    if (isFx && !isJpyFx) {
+    if (isFxMajor && !isJpyFx) {
       if (h > 20 || l < 0.00001) {
         removedOutlierBars += 1;
         continue;
@@ -863,6 +866,16 @@ function sanitizeBarsForScale(bars, canonical) {
     if (isJpyFx && (h > 1000 || l < 0.01)) {
       removedOutlierBars += 1;
       continue;
+    }
+    if (isCommoditySpot) {
+      if (c === 'XAUUSD' && (l < 1 || h > 20000)) {
+        removedOutlierBars += 1;
+        continue;
+      }
+      if (c === 'XAGUSD' && (l < 0.01 || h > 500)) {
+        removedOutlierBars += 1;
+        continue;
+      }
     }
     if (isCrypto && h < 1) {
       removedOutlierBars += 1;
@@ -875,7 +888,7 @@ function sanitizeBarsForScale(bars, canonical) {
   if (closes.length > 20) {
     const sorted = [...closes].sort((a, b) => a - b);
     const median = sorted[Math.floor(sorted.length / 2)];
-    const maxRatio = isFx ? 10 : isCrypto ? 80 : 25;
+    const maxRatio = isFxMajor ? 10 : isCrypto ? 80 : isCommoditySpot ? 40 : 25;
     const filtered = [];
     for (const b of out) {
       if (median > 0 && (b.high / median > maxRatio || median / b.low > maxRatio)) {
