@@ -700,6 +700,34 @@
       "destination": "/api/backtesting.js"
     },
     {
+      "source": "/api/backtesting/candles",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/replay/sessions/:sessionId/trades/:tradeId/close",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/replay/sessions/:sessionId/trades",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/replay/sessions/:sessionId",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/saved-trades/:savedTradeId",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/saved-trades",
+      "destination": "/api/backtesting.js"
+    },
+    {
+      "source": "/api/backtesting/ai-coach",
+      "destination": "/api/backtesting.js"
+    },
+    {
       "source": "/api/backtesting/trades",
       "destination": "/api/backtesting.js"
     },

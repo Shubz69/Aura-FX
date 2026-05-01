@@ -112,15 +112,27 @@ export default function BacktestingWorkspace() {
   }, [candles.length, controls.speedMs, playing]);
 
   const refreshSessionData = async () => {
-    const [sRes, tRes, svRes] = await Promise.all([
+    const [sOut, tOut, svOut] = await Promise.allSettled([
       Api.getBacktestingSession(sessionId),
       Api.getBacktestingSessionTrades(sessionId),
       Api.listBacktestingSavedTrades(),
     ]);
-    if (sRes.data?.success) setSession(sRes.data.session);
-    if (tRes.data?.success) setAllTrades(tRes.data.trades || []);
-    if (svRes.data?.success) setSavedTrades(svRes.data.trades || []);
-    const s = sRes.data?.session;
+    if (sOut.status === 'rejected') throw sOut.reason;
+    const sRes = sOut.value;
+    if (!sRes.data?.success) {
+      const msg = sRes.data?.message || 'Session not found';
+      const err = new Error(msg);
+      err.response = sRes;
+      throw err;
+    }
+    setSession(sRes.data.session);
+    if (tOut.status === 'fulfilled' && tOut.value.data?.success) {
+      setAllTrades(tOut.value.data.trades || []);
+    }
+    if (svOut.status === 'fulfilled' && svOut.value.data?.success) {
+      setSavedTrades(svOut.value.data.trades || []);
+    }
+    const s = sRes.data.session;
     if (s) {
       const instrument = s.lastActiveInstrument || s.instruments?.[0] || 'EURUSD';
       const dt = s.lastReplayAt ? new Date(s.lastReplayAt) : new Date();
