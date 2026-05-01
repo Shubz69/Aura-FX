@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { SITE_LANGUAGES, applySiteLanguage } from '../utils/siteLanguage';
+import '../styles/LanguageSelector.css';
 
 export default function LanguageSelector({ value, onChange, className = '' }) {
   const { t } = useTranslation();
@@ -11,16 +12,28 @@ export default function LanguageSelector({ value, onChange, className = '' }) {
     if (typeof onChange === 'function') onChange(next);
   };
 
+  const rootClass = ['site-language-selector', className].filter(Boolean).join(' ');
+
   return (
-    <div className={className}>
-      <label htmlFor="site-language-select">{t('languageSelector.label')}</label>
-      <select id="site-language-select" value={value} onChange={handleChange}>
-        {SITE_LANGUAGES.map((lang) => (
-          <option key={lang.code} value={lang.code}>
-            {lang.label}
-          </option>
-        ))}
-      </select>
+    <div className={rootClass}>
+      <label htmlFor="site-language-select" className="site-language-selector__label">
+        {t('languageSelector.label')}
+      </label>
+      <div className="site-language-selector__wrap">
+        <select
+          id="site-language-select"
+          className="site-language-selector__select"
+          value={value}
+          onChange={handleChange}
+          aria-label={t('languageSelector.label')}
+        >
+          {SITE_LANGUAGES.map((lang) => (
+            <option key={lang.code} value={lang.code}>
+              {lang.label}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }

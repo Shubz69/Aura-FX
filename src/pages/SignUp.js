@@ -224,9 +224,7 @@ function SignUp() {
                     <h2 className="login-title">{t('auth.signUp')}</h2>
                     <p className="login-subtitle">{t('auth.createAccountVerify')}</p>
                 </div>
-                <div style={{ marginBottom: 12 }}>
-                    <LanguageSelector value={siteLanguage} onChange={setSiteLanguage} />
-                </div>
+                <LanguageSelector value={siteLanguage} onChange={setSiteLanguage} />
                 {error && <div className="error-message">{error}</div>}
                 {success && <div className="success-message">{success}</div>}
 

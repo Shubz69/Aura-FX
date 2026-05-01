@@ -304,9 +304,7 @@ const Login = () => {
                         <h1 className="brand-title">{t('auth.mfaHeaderBrand')}</h1>
                     </div>
                     
-                    <div style={{ marginBottom: 12 }}>
-                        <LanguageSelector value={siteLanguage} onChange={setSiteLanguage} />
-                    </div>
+                    <LanguageSelector value={siteLanguage} onChange={setSiteLanguage} />
                     <h2 className="mfa-title">{t('auth.mfaTitle')}</h2>
                     <p className="mfa-info">{t('auth.mfaInfo')}</p>
                     <p className="email-sent">{t('auth.codeSentTo')} {email}</p>
@@ -371,9 +369,7 @@ const Login = () => {
                     <h2 className="login-title">{t('auth.signIn')}</h2>
                     <p className="login-subtitle">{t('auth.accessTradingAccount')}</p>
                 </div>
-                <div style={{ marginBottom: 12 }}>
-                    <LanguageSelector value={siteLanguage} onChange={setSiteLanguage} />
-                </div>
+                <LanguageSelector value={siteLanguage} onChange={setSiteLanguage} />
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">

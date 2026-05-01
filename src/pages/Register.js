@@ -242,9 +242,7 @@ const Register = () => {
                     <h2 className="register-title">{t('register.signUp')}</h2>
                     <p className="register-subtitle">{t('auth.createAccountVerify')}</p>
                 </div>
-                <div style={{ marginBottom: 12 }}>
-                    <LanguageSelector value={siteLanguage} onChange={setSiteLanguage} />
-                </div>
+                <LanguageSelector value={siteLanguage} onChange={setSiteLanguage} />
                 {error ? <div className="error-message">{error}</div> : null}
                 {success ? <div className="success-message">{success}</div> : null}
 
