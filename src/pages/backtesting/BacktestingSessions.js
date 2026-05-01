@@ -7,12 +7,17 @@ import { toast } from 'react-toastify';
 export default function BacktestingSessions() {
   const [sessions, setSessions] = useState([]);
   const [status, setStatus] = useState('');
+  const [storage, setStorage] = useState('');
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
     try {
-      const res = await Api.getBacktestingSessions(status ? { status } : {});
+      const params = {};
+      if (status) params.status = status;
+      if (storage === 'persisted') params.storage = 'persisted';
+      else if (storage === 'ephemeral') params.storage = 'ephemeral';
+      const res = await Api.getBacktestingSessions(params);
       if (res.data?.success) setSessions(res.data.sessions || []);
     } catch (e) {
       toast.error(e?.response?.data?.message || 'Failed to load');
@@ -23,7 +28,7 @@ export default function BacktestingSessions() {
 
   useEffect(() => {
     load();
-  }, [status]);
+  }, [status, storage]);
 
   const dup = async (id) => {
     try {
@@ -73,23 +78,35 @@ export default function BacktestingSessions() {
       <header className="bt-page-header">
         <div>
           <h1 className="bt-title">Session manager</h1>
-          <p className="bt-subtitle">Filter, resume, duplicate, archive, or remove backtesting sessions.</p>
+          <p className="bt-subtitle">
+            Filter by library: <strong>Saved</strong> never auto-expires; <strong>Active 24h</strong> replay sessions expire unless you save them from the workspace.
+          </p>
         </div>
         <Link to="/backtesting/new" className="bt-btn bt-btn--primary">
           New Session
         </Link>
       </header>
 
-      <div className="bt-panel">
-        <label className="bt-label">Status</label>
-        <select className="bt-select" style={{ maxWidth: 220 }} value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">All</option>
-          <option value="draft">Draft</option>
-          <option value="active">Active</option>
-          <option value="paused">Paused</option>
-          <option value="completed">Completed</option>
-          <option value="archived">Archived</option>
-        </select>
+      <div className="bt-panel" style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <label className="bt-label">Library</label>
+          <select className="bt-select" style={{ maxWidth: 240 }} value={storage} onChange={(e) => setStorage(e.target.value)}>
+            <option value="">All</option>
+            <option value="persisted">Saved (library)</option>
+            <option value="ephemeral">Active 24h (unsaved replay)</option>
+          </select>
+        </div>
+        <div>
+          <label className="bt-label">Status</label>
+          <select className="bt-select" style={{ maxWidth: 220 }} value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">All</option>
+            <option value="draft">Draft</option>
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="completed">Completed</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
@@ -105,6 +122,8 @@ export default function BacktestingSessions() {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Saved</th>
+                <th>Expires</th>
                 <th>Playbook</th>
                 <th>Instruments</th>
                 <th>Range</th>
@@ -120,6 +139,8 @@ export default function BacktestingSessions() {
               {sessions.map((s) => (
                 <tr key={s.id}>
                   <td>{s.sessionName || '—'}</td>
+                  <td>{s.ephemeralExpiresAt ? <span className="aa-pill aa-pill--dim">Active</span> : <span className="aa-pill">Saved</span>}</td>
+                  <td>{s.ephemeralExpiresAt ? new Date(s.ephemeralExpiresAt).toLocaleString() : '—'}</td>
                   <td>{s.playbookName || '—'}</td>
                   <td>{(s.instruments || []).length ? (s.instruments || []).join(', ') : '—'}</td>
                   <td>

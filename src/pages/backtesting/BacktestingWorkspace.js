@@ -81,6 +81,7 @@ export default function BacktestingWorkspace() {
   const [selectedBar, setSelectedBar] = useState(null);
   const [candleOpen, setCandleOpen] = useState(false);
   const [chartFitKey, setChartFitKey] = useState(0);
+  const [persistBusy, setPersistBusy] = useState(false);
 
   const [controls, setControls] = useState({
     instrument: 'EURUSD',
@@ -395,6 +396,19 @@ export default function BacktestingWorkspace() {
     }
   };
 
+  const persistSessionToLibrary = async () => {
+    setPersistBusy(true);
+    try {
+      await Api.patchBacktestingSession(sessionId, { persistSession: true });
+      await refreshSessionData();
+      toast.success('Session saved — it stays in your library and will no longer expire after 24 hours.');
+    } catch (e) {
+      toast.error(e?.response?.data?.message || 'Could not save session');
+    } finally {
+      setPersistBusy(false);
+    }
+  };
+
   const loadSavedTradeReplay = (saved) => {
     const ref = saved?.replayReference || {};
     if (ref?.symbol) setControls((p) => ({ ...p, instrument: ref.symbol }));
@@ -414,8 +428,26 @@ export default function BacktestingWorkspace() {
     : '—';
   const progressPct = candles.length ? Math.round((visibleBars / candles.length) * 100) : 0;
 
+  const ephemeralExpiryLabel = session?.ephemeralExpiresAt
+    ? new Date(session.ephemeralExpiresAt).toLocaleString()
+    : null;
+
   return (
     <div className="bt-replay-page">
+      {session?.ephemeralExpiresAt ? (
+        <div className="aa-card bt-ephemeral-banner" role="status">
+          <div>
+            <strong>Active session (not saved to library)</strong>
+            <p className="aa--muted bt-ephemeral-banner__hint">
+              This replay is kept for <strong>24 hours</strong> from when you started it. Save it to your library to keep it permanently. If you do nothing, it is removed automatically after{' '}
+              <strong>{ephemeralExpiryLabel || 'expiry'}</strong>.
+            </p>
+          </div>
+          <button type="button" className="bt-btn bt-btn--primary" disabled={persistBusy} onClick={persistSessionToLibrary}>
+            {persistBusy ? 'Saving…' : 'Save to library'}
+          </button>
+        </div>
+      ) : null}
       <section className="aa-card bt-replay-controls">
         <div className="bt-replay-controls__head">
           <div>

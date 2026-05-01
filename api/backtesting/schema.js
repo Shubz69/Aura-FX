@@ -45,6 +45,7 @@ async function ensureBacktestTables() {
       lastActiveInstrument VARCHAR(64) DEFAULT NULL,
       replaySpeed DECIMAL(10,4) NOT NULL DEFAULT 1,
       completionRecapJson JSON DEFAULT NULL,
+      ephemeralExpiresAt DATETIME DEFAULT NULL,
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       INDEX idx_bt_sess_user (userId),
@@ -146,6 +147,7 @@ async function ensureBacktestTables() {
   `);
 
   const alters = [
+    'ALTER TABLE backtest_sessions ADD COLUMN ephemeralExpiresAt DATETIME NULL DEFAULT NULL',
     'ALTER TABLE backtest_sessions ADD COLUMN completionRecapJson JSON DEFAULT NULL',
     'ALTER TABLE backtest_trades ADD COLUMN screenshotUrl VARCHAR(512) DEFAULT NULL',
     'ALTER TABLE backtest_saved_trades ADD COLUMN replayReferenceJson JSON DEFAULT NULL',

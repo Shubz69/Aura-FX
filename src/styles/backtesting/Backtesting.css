@@ -1203,6 +1203,24 @@
   gap: 14px;
 }
 
+.journal-page .bt-root .bt-ephemeral-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: var(--bt-radius-md);
+  border: 1px solid rgba(234, 169, 96, 0.28);
+  background: rgba(234, 169, 96, 0.08);
+}
+
+.journal-page .bt-root .bt-ephemeral-banner .bt-ephemeral-banner__hint {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  max-width: 52rem;
+}
+
 .journal-page .bt-root .bt-replay-controls__head {
   display: flex;
   justify-content: space-between;

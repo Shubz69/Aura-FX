@@ -294,6 +294,9 @@ export default function BacktestingNewSession() {
             <input className="bt-input" type="number" min={1000} step={100} value={initialBalance} onChange={(e) => setInitialBalance(e.target.value)} />
           </div>
         </div>
+        <p className="aa--muted" style={{ fontSize: '0.8rem', marginTop: '-4px', marginBottom: 8 }}>
+          <strong>Start Replay</strong> opens a workspace session kept for <strong>24 hours</strong> until you <strong>Save to library</strong> there — or choose <strong>Save draft</strong> here to persist without starting replay.
+        </p>
         <div className="bt-hero-actions bt-quickstart-actions">
           <button type="button" className="bt-btn bt-btn--primary bt-quickstart-actions__primary" disabled={saving} onClick={startReplay}>
             {saving ? 'Starting…' : 'Start Replay'}

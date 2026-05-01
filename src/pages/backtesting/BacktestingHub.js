@@ -38,7 +38,14 @@ export default function BacktestingHub() {
     load();
   }, []);
 
-  const recent = sessions.slice(0, 8);
+  const ephemeralRecent = useMemo(
+    () => sessions.filter((s) => Boolean(s.ephemeralExpiresAt)).slice(0, 12),
+    [sessions]
+  );
+  const persistedRecent = useMemo(
+    () => sessions.filter((s) => !s.ephemeralExpiresAt).slice(0, 12),
+    [sessions]
+  );
   const hub = summary?.hubDetail;
 
   const playbookSnapshot = useMemo(() => {
@@ -297,10 +304,57 @@ export default function BacktestingHub() {
           <div className="aa-card" style={{ marginBottom: 18 }}>
             <h2 className="aa-section-title-lg">
               <span className="aa-title-dot" />
-              Recent sessions
+              Active sessions (24h · not saved to library)
             </h2>
-            {recent.length === 0 ? (
-              <p className="aa--muted">No sessions listed.</p>
+            <p className="aa--muted" style={{ marginTop: '-4px', marginBottom: '12px', fontSize: '0.82rem' }}>
+              New replay sessions appear here until you save them from the workspace, complete, archive, or they expire (~24 hours).
+            </p>
+            {ephemeralRecent.length === 0 ? (
+              <p className="aa--muted">None right now.</p>
+            ) : (
+              <div className="aa-table-wrap">
+                <table className="aa-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Status</th>
+                      <th>Expires (local)</th>
+                      <th>Trades</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ephemeralRecent.map((s) => (
+                      <tr key={s.id}>
+                        <td>{s.sessionName}</td>
+                        <td>
+                          <span className="aa-pill aa-pill--dim">{s.status}</span>
+                        </td>
+                        <td className="aa-table-num">{s.ephemeralExpiresAt ? new Date(s.ephemeralExpiresAt).toLocaleString() : '—'}</td>
+                        <td className="aa-table-num">{s.totalTrades}</td>
+                        <td>
+                          <Link className="bt-btn bt-btn--ghost bt-btn--sm" to={`/backtesting/session/${s.id}`}>
+                            Open
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div className="aa-card" style={{ marginBottom: 18 }}>
+            <h2 className="aa-section-title-lg">
+              <span className="aa-title-dot" />
+              Saved sessions
+            </h2>
+            <p className="aa--muted" style={{ marginTop: '-4px', marginBottom: '12px', fontSize: '0.82rem' }}>
+              Drafts you saved from the wizard, sessions you persisted from replay, duplicates, completed, or archived sessions.
+            </p>
+            {persistedRecent.length === 0 ? (
+              <p className="aa--muted">No saved sessions listed.</p>
             ) : (
               <div className="aa-table-wrap">
                 <table className="aa-table">
@@ -315,7 +369,7 @@ export default function BacktestingHub() {
                     </tr>
                   </thead>
                   <tbody>
-                    {recent.map((s) => (
+                    {persistedRecent.map((s) => (
                       <tr key={s.id}>
                         <td>{s.sessionName}</td>
                         <td>

@@ -23,6 +23,33 @@ const {
 const { toCanonical } = require('./ai/utils/symbol-registry');
 
 const EPS = 1e-8;
+const EPHEMERAL_SESSION_MS = 24 * 60 * 60 * 1000;
+
+async function purgeExpiredEphemeralSessionsForUser(userId) {
+  try {
+    const [expired] = await executeQuery(
+      `SELECT id FROM backtest_sessions
+       WHERE userId = ?
+         AND ephemeralExpiresAt IS NOT NULL
+         AND ephemeralExpiresAt < UTC_TIMESTAMP()`,
+      [userId]
+    );
+    if (!Array.isArray(expired) || !expired.length) return;
+    for (const { id } of expired) {
+      if (!id) continue;
+      await executeQuery('DELETE FROM backtest_trades WHERE sessionId = ? AND userId = ?', [id, userId]);
+      await executeQuery('DELETE FROM backtest_session_notes WHERE sessionId = ? AND userId = ?', [id, userId]);
+      await executeQuery('DELETE FROM backtest_sessions WHERE id = ? AND userId = ?', [id, userId]);
+    }
+  } catch (err) {
+    console.warn('purgeExpiredEphemeralSessionsForUser:', err?.message || err);
+  }
+}
+
+function ephemeralExpiryMysqlOrNull(saveDraft) {
+  if (saveDraft) return null;
+  return toMysqlDatetimeUtc(new Date(Date.now() + EPHEMERAL_SESSION_MS));
+}
 
 function getPathname(req) {
   if (!req.url) return '';
@@ -209,6 +236,7 @@ async function insertBacktestSessionResilient(valuesByColumn) {
     startedAt: valuesByColumn.startedAt || null,
     lastReplayAt: valuesByColumn.lastReplayAt || null,
     lastActiveInstrument: valuesByColumn.lastActiveInstrument || null,
+    ephemeralExpiresAt: valuesByColumn.ephemeralExpiresAt ?? null,
   };
 
   await insertWithExistingColumns('backtest_sessions', minimal);
@@ -259,6 +287,8 @@ function mapSessionRow(row) {
     lastActiveInstrument: row.lastActiveInstrument ?? null,
     replaySpeed: num(row.replaySpeed, 1),
     completionRecap: jsonVal(row.completionRecapJson, null),
+    ephemeralExpiresAt: row.ephemeralExpiresAt ?? null,
+    isPersistedToLibrary: row.ephemeralExpiresAt == null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -906,6 +936,7 @@ module.exports = async (req, res) => {
 
   try {
     await ensureBacktestTables();
+    await purgeExpiredEphemeralSessionsForUser(userId);
   } catch (err) {
     console.error('backtesting ensureBacktestTables:', err);
     return res.status(500).json({ success: false, message: 'Database error' });
@@ -982,8 +1013,14 @@ module.exports = async (req, res) => {
       const status = url.searchParams.get('status');
       const playbookId = url.searchParams.get('playbookId');
       const instrument = url.searchParams.get('instrument');
+      const storage = url.searchParams.get('storage');
       let sql = 'SELECT * FROM backtest_sessions WHERE userId = ?';
       const p = [userId];
+      if (storage === 'persisted') {
+        sql += ' AND ephemeralExpiresAt IS NULL';
+      } else if (storage === 'ephemeral') {
+        sql += ' AND ephemeralExpiresAt IS NOT NULL';
+      }
       if (status) {
         sql += ' AND status = ?';
         p.push(status);
@@ -1052,6 +1089,7 @@ module.exports = async (req, res) => {
       const status = saveDraft ? 'draft' : 'active';
       const startedAt = saveDraft ? null : toMysqlDatetimeUtc(new Date());
       const lastReplayAt = replayStartAt || (dateStart ? toMysqlDatetimeUtc(new Date(`${dateStart}T00:00:00.000Z`)) : null);
+      const ephemeralExpiresAt = ephemeralExpiryMysqlOrNull(saveDraft);
 
       await insertBacktestSessionResilient({
         id,
@@ -1079,6 +1117,7 @@ module.exports = async (req, res) => {
         startedAt,
         lastReplayAt,
         lastActiveInstrument: instruments[0] || null,
+        ephemeralExpiresAt,
       });
 
       const row = await loadSessionForUser(id, userId);
@@ -1144,6 +1183,9 @@ module.exports = async (req, res) => {
           next.timeSpentSeconds = Number(row.timeSpentSeconds || 0) + add;
         }
 
+        let nextEphemeralExpiresAt = row.ephemeralExpiresAt ?? null;
+        if (body.persistSession === true) nextEphemeralExpiresAt = null;
+
         const st = next.status;
         if (['draft', 'active', 'paused', 'completed', 'archived'].indexOf(st) === -1) {
           return res.status(400).json({ success: false, message: 'Invalid status' });
@@ -1171,7 +1213,7 @@ module.exports = async (req, res) => {
             sessionName = ?, description = ?, status = ?, marketType = ?, instrumentsJson = ?, playbookId = ?, playbookName = ?,
             initialBalance = ?, riskModel = ?, dateStart = ?, dateEnd = ?, replayTimeframe = ?, replayGranularity = ?,
             tradingHoursMode = ?, objective = ?, objectiveDetail = ?, strategyContextJson = ?, chartPrefsJson = ?, notes = ?,
-            lastReplayAt = ?, lastActiveInstrument = ?, replaySpeed = ?, timeSpentSeconds = ?,
+            lastReplayAt = ?, lastActiveInstrument = ?, replaySpeed = ?, timeSpentSeconds = ?, ephemeralExpiresAt = ?,
             updatedAt = CURRENT_TIMESTAMP
           WHERE id = ? AND userId = ?`,
           [
@@ -1202,6 +1244,7 @@ module.exports = async (req, res) => {
             next.lastActiveInstrument,
             next.replaySpeed,
             next.timeSpentSeconds != null ? next.timeSpentSeconds : row.timeSpentSeconds,
+            nextEphemeralExpiresAt,
             sessionId,
             userId,
           ]
@@ -1237,7 +1280,7 @@ module.exports = async (req, res) => {
       const bd = breakdownMetrics(trades, num(row.initialBalance));
       const recap = completionRecap(agg, bd);
       await executeQuery(
-        `UPDATE backtest_sessions SET status = 'completed', completedAt = CURRENT_TIMESTAMP, completionRecapJson = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND userId = ?`,
+        `UPDATE backtest_sessions SET status = 'completed', completedAt = CURRENT_TIMESTAMP, completionRecapJson = ?, ephemeralExpiresAt = NULL, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND userId = ?`,
         [stringifyJson(recap), sessionId, userId]
       );
       await recalculateSessionAggregates(sessionId, userId);
@@ -1248,10 +1291,10 @@ module.exports = async (req, res) => {
     const sessionArchive = pathname.match(/^\/api\/backtesting\/sessions\/([a-f0-9-]{36})\/archive$/i);
     if (sessionArchive && req.method === 'POST') {
       const sessionId = sessionArchive[1];
-      await executeQuery(`UPDATE backtest_sessions SET status = 'archived', updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND userId = ?`, [
-        sessionId,
-        userId,
-      ]);
+      await executeQuery(
+        `UPDATE backtest_sessions SET status = 'archived', ephemeralExpiresAt = NULL, updatedAt = CURRENT_TIMESTAMP WHERE id = ? AND userId = ?`,
+        [sessionId, userId]
+      );
       const updated = await loadSessionForUser(sessionId, userId);
       if (!updated) return res.status(404).json({ success: false, message: 'Session not found' });
       return res.status(200).json({ success: true, session: mapSessionRow(updated) });
@@ -1293,8 +1336,9 @@ module.exports = async (req, res) => {
         `INSERT INTO backtest_sessions (
           id, userId, sessionName, description, status, marketType, instrumentsJson, playbookId, playbookName,
           initialBalance, currentBalance, riskModel, dateStart, dateEnd, replayTimeframe, replayGranularity,
-          tradingHoursMode, objective, objectiveDetail, strategyContextJson, chartPrefsJson, notes
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          tradingHoursMode, objective, objectiveDetail, strategyContextJson, chartPrefsJson, notes,
+          ephemeralExpiresAt
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [
           nid,
           userId,
@@ -1318,6 +1362,7 @@ module.exports = async (req, res) => {
           row.strategyContextJson || '{}',
           row.chartPrefsJson || '{}',
           row.notes,
+          null,
         ]
       );
       const created = await loadSessionForUser(nid, userId);
