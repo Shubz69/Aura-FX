@@ -359,6 +359,13 @@
   background: linear-gradient(90deg, rgba(248, 195, 125, 0.08), rgba(0, 0, 0, 0.15));
 }
 
+.sv-hero-context-regional {
+  flex-basis: 100%;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: rgba(186, 220, 255, 0.92);
+}
+
 .sv-hero-context-label {
   font-size: 0.58rem;
   letter-spacing: 0.18em;

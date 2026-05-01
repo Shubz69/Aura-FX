@@ -3,7 +3,7 @@ const { executeQuery } = require('../db');
 const { isSuperAdminEmail } = require('../utils/entitlements');
 const { ensureSurveillanceSchema } = require('./schema');
 const { getSystemHealthSummary } = require('./adapterState');
-const { datalasticGloballyDisabled } = require('./adapters/datalasticAisLive');
+const { providerEnvFlags } = require('./feedDiagnostics');
 
 function setCors(req, res) {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
@@ -19,28 +19,8 @@ function isSurveillanceDebugRoute(req) {
   return /\/api\/surveillance\/debug(\?|$|\/)/.test(raw);
 }
 
-function providerEnvFlags() {
-  const basicUser = String(process.env.OPENSKY_USERNAME || '').trim();
-  const basicPass = String(process.env.OPENSKY_PASSWORD || '').trim();
-  const id = String(process.env.OPENSKY_CLIENT_ID || process.env.OPENSKY_USERNAME || '').trim();
-  const secret = String(process.env.OPENSKY_CLIENT_SECRET || process.env.OPENSKY_PASSWORD || '').trim();
-  return {
-    opensky_basic_configured: !!(basicUser && basicPass),
-    opensky_oauth_configured: !!(id && secret),
-    opensky_adapter_disabled: /^1|true|yes$/i.test(String(process.env.OPENSKY_ADAPTER_DISABLED || '')),
-    datalastic_configured: !!String(process.env.DATALASTIC_API_KEY || '').trim(),
-    datalastic_adapter_disabled: datalasticGloballyDisabled(),
-    datalastic_kill_switch_env: {
-      DATALASTIC_ADAPTER_DISABLED: /^1|true|yes$/i.test(String(process.env.DATALASTIC_ADAPTER_DISABLED || '')),
-      DATALASTIC_AIS_ADAPTER_DISABLED: /^1|true|yes$/i.test(String(process.env.DATALASTIC_AIS_ADAPTER_DISABLED || '')),
-      DATALASTIC_DISABLED: /^1|true|yes$/i.test(String(process.env.DATALASTIC_DISABLED || '')),
-    },
-    news_api_configured: !!String(process.env.NEWS_API_KEY || '').trim(),
-  };
-}
-
 async function adapterSnapshotForLiveGeo() {
-  const ids = ['opensky_live', 'datalastic_ais_live'];
+  const ids = ['opensky_live'];
   try {
     const [rows] = await executeQuery(
       `SELECT adapter_id, last_success_at, last_error_at, last_error_code, last_items_in, last_items_out, consecutive_failures

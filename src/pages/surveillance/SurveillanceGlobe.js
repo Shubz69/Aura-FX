@@ -177,6 +177,15 @@ function trackKindRank(kind) {
   return order[kind] ?? 0;
 }
 
+/** Visual weight 0…1 from backend aircraft_importance (OpenSky-enriched rows). */
+function aircraftImportanceImpulse(ev) {
+  const t = String(ev?.aircraft_importance || '').toLowerCase();
+  if (t === 'critical') return 1;
+  if (t === 'high') return 0.78;
+  if (t === 'notable') return 0.48;
+  return 0;
+}
+
 function normalizeEventCategory(eventType) {
   const et = String(eventType || '').toLowerCase();
   if (et === 'central_bank') return 'central_banks';
@@ -755,11 +764,12 @@ useEffect(() => {
       const liveMil = liveCluster && trackKind === 'aviation_military';
       const liveCargo = liveCluster && trackKind === 'aviation_cargo';
       const leadEvent = idMap.get(String(p.eventId));
+      const airImp = aircraftImportanceImpulse(leadEvent);
       const impactLevel = String(leadEvent?.market_impact_level || '').toLowerCase();
       const impactScore = Number(leadEvent?.market_impact_score_scaled) || 0;
       const recencyWeight = Number(leadEvent?.recency_weight) || 0.45;
       const highPriority = impactLevel === 'high' || impactLevel === 'critical';
-      const lowPriority = impactLevel === 'low';
+      const lowPriority = impactLevel === 'low' && airImp < 0.48;
       const freshPriority = recencyWeight >= 0.88 && highPriority;
       const color = isSel
         ? '#ffd9a8'
@@ -773,13 +783,15 @@ useEffect(() => {
                 ? 'rgba(255, 122, 102, 0.98)'
                 : impactLevel === 'high'
                   ? 'rgba(255, 176, 112, 0.96)'
-              : liveMil
-                ? 'rgba(255, 198, 138, 0.98)'
-                : liveCargo
-                  ? 'rgba(168, 236, 255, 0.98)'
-                  : liveCluster && dominantCategory === 'aviation'
-                    ? 'rgba(128, 234, 255, 0.97)'
-                    : categoryColor(activeCat !== 'all' ? activeCat : dominantCategory);
+              : airImp >= 0.78
+                ? 'rgba(255, 210, 160, 0.98)'
+                : liveMil
+                  ? 'rgba(255, 198, 138, 0.98)'
+                  : liveCargo
+                    ? 'rgba(168, 236, 255, 0.98)'
+                    : liveCluster && dominantCategory === 'aviation'
+                      ? `rgba(${128 + Math.round(40 * airImp)}, ${234 - Math.round(20 * airImp)}, 255, ${0.72 + airImp * 0.24})`
+                      : categoryColor(activeCat !== 'all' ? activeCat : dominantCategory);
       return {
         ...p,
         markerKind: trackKind === 'aviation_military' || trackKind === 'aviation_cargo' || trackKind === 'aviation' ? 'aircraft' : dominantCategory,
@@ -808,6 +820,7 @@ useEffect(() => {
             trackKind === 'military'
               ? 0.06
               : 0) +
+            airImp * 0.34 +
             (categoryFocused ? 0.08 : 0) +
             (hot || freshPriority ? pulseStep * 0.06 : 0) +
             (isSel ? 0.14 : 0) +
@@ -818,7 +831,8 @@ useEffect(() => {
           Math.min(0.082, p.count * 0.004 + pulseBoost + (freshPriority ? 0.012 : 0) + (isSel ? 0.018 : 0)) +
           (liveCluster ? 0.014 : 0) +
           (categoryFocused ? 0.012 : 0) +
-          (lens && inFocus ? 0.02 : 0),
+          (lens && inFocus ? 0.02 : 0) +
+          airImp * 0.028,
       };
     });
   }, [events, selectedId, reducedMotion, focusRegion, activeCategory]);

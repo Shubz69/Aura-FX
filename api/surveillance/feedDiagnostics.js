@@ -4,15 +4,13 @@
 
 const { executeQuery } = require('../db');
 const { bucketAdapterRecency } = require('./adapterState');
-const { datalasticGloballyDisabled } = require('./adapters/datalasticAisLive');
 
 /** Static hints for operators (paths match vercel.json crons). */
 const SURVEILLANCE_CRON_HINT = {
   surveillance_ingest: {
     path: '/api/cron/surveillance-ingest',
     schedule_cron: '*/5 * * * *',
-    scope:
-      'batched HTML/RSS + rotating adapters (includes datalastic_ais_live when enabled; Datalastic HTTP only from this cron)',
+    scope: 'batched HTML/RSS + rotating adapters (no paid vessel telemetry — maritime from public feeds + demo/fallback markers)',
   },
   surveillance_tracks: {
     path: '/api/cron/surveillance-tracks',
@@ -30,13 +28,7 @@ function providerEnvFlags() {
     opensky_basic_configured: !!(basicUser && basicPass),
     opensky_oauth_configured: !!(id && secret),
     opensky_adapter_disabled: /^1|true|yes$/i.test(String(process.env.OPENSKY_ADAPTER_DISABLED || '')),
-    datalastic_configured: !!String(process.env.DATALASTIC_API_KEY || '').trim(),
-    datalastic_adapter_disabled: datalasticGloballyDisabled(),
-    datalastic_kill_switch_env: {
-      DATALASTIC_ADAPTER_DISABLED: /^1|true|yes$/i.test(String(process.env.DATALASTIC_ADAPTER_DISABLED || '')),
-      DATALASTIC_AIS_ADAPTER_DISABLED: /^1|true|yes$/i.test(String(process.env.DATALASTIC_AIS_ADAPTER_DISABLED || '')),
-      DATALASTIC_DISABLED: /^1|true|yes$/i.test(String(process.env.DATALASTIC_DISABLED || '')),
-    },
+    opensky_configured: !!(basicUser && basicPass) || !!(id && secret),
     news_api_configured: !!String(process.env.NEWS_API_KEY || '').trim(),
   };
 }
@@ -53,11 +45,11 @@ function parseRunMeta(raw) {
 }
 
 async function adapterSnapshotForLiveGeo() {
-  const ids = ['opensky_live', 'datalastic_ais_live'];
+  const ids = ['opensky_live'];
   try {
     const [rows] = await executeQuery(
       `SELECT adapter_id, last_success_at, last_error_at, last_error_code, last_items_in, last_items_out, consecutive_failures
-       FROM surveillance_adapter_state WHERE adapter_id IN (?, ?)`,
+       FROM surveillance_adapter_state WHERE adapter_id = ?`,
       ids
     );
     const [runRows] = await executeQuery(
@@ -66,7 +58,7 @@ async function adapterSnapshotForLiveGeo() {
        INNER JOIN (
          SELECT adapter_id, MAX(id) AS max_id
          FROM surveillance_ingest_runs
-         WHERE adapter_id IN (?, ?)
+         WHERE adapter_id = ?
          GROUP BY adapter_id
        ) t ON t.max_id = r.id AND t.adapter_id = r.adapter_id`,
       ids
@@ -74,7 +66,7 @@ async function adapterSnapshotForLiveGeo() {
     const [evRows] = await executeQuery(
       `SELECT source, COUNT(*) AS c
        FROM surveillance_events
-       WHERE source IN (?, ?)
+       WHERE source = ?
          AND detected_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 24 HOUR)
        GROUP BY source`,
       ids
@@ -104,19 +96,17 @@ async function adapterSnapshotForLiveGeo() {
         last_ingest_run: run
           ? {
               finished_at: run.finished_at || null,
-              /** Rows returned / prepared for upsert pipeline in that run (DB column). */
               fetched_count: run.items_in != null ? Number(run.items_in) : null,
-              /** Rows upserted in that run (DB column). */
               upserted_count: run.items_out != null ? Number(run.items_out) : null,
               error_code: run.error_code || null,
-              /** Adapter self-report from run meta when present (OpenSky/Datalastic). */
               normalized_candidates: meta.candidates != null ? Number(meta.candidates) : null,
               normalized_emitted: meta.emitted != null ? Number(meta.emitted) : null,
+              opensky_fetched_count: meta.fetched_count != null ? Number(meta.fetched_count) : null,
+              opensky_normalized_emitted: meta.normalized_emitted != null ? Number(meta.normalized_emitted) : null,
             }
           : null,
-        /** Rows in DB from this source in last 24h (event_type is aviation/maritime from adapters). */
         events_written_24h: evMap.get(adapter_id) || 0,
-        canonical_event_type: adapter_id === 'opensky_live' ? 'aviation' : 'maritime',
+        canonical_event_type: 'aviation',
       };
     });
   } catch {
@@ -144,6 +134,33 @@ async function geoTaggedEventCounts() {
   } catch {
     return { geoTaggedAllTime: null, geoTagged24h: null, error: 'counts_unavailable' };
   }
+}
+
+/**
+ * Compact, safe hints for /surveillance UI (no secrets).
+ * @param {object[]} liveGeoAdapters adapterSnapshotForLiveGeo()
+ * @param {object} envFlags providerEnvFlags()
+ */
+function buildLiveGeoClientHints(liveGeoAdapters, envFlags) {
+  const os = (liveGeoAdapters || []).find((x) => x.adapter_id === 'opensky_live') || {};
+  const osRun = os.last_ingest_run || {};
+  return {
+    opensky: {
+      configured: !!envFlags.opensky_configured,
+      adapter_disabled: !!envFlags.opensky_adapter_disabled,
+      last_success_at: os.last_success_at || null,
+      fetched_count: osRun.opensky_fetched_count ?? osRun.fetched_count ?? null,
+      normalized_emitted: osRun.opensky_normalized_emitted ?? osRun.normalized_emitted ?? null,
+      events_written_24h: os.events_written_24h ?? 0,
+    },
+    maritime_context: {
+      live_vessel_tracking_enabled: false,
+      note: 'Maritime map context uses public/official ingest (e.g. trade press, regulators) and clearly labelled demo markers when the feed is sparse — not live AIS positions.',
+    },
+    messages: [
+      'Live vessel tracking not enabled. Maritime risk is based on public reports and fallback context.',
+    ],
+  };
 }
 
 /**
@@ -184,6 +201,7 @@ module.exports = {
   providerEnvFlags,
   adapterSnapshotForLiveGeo,
   geoTaggedEventCounts,
+  buildLiveGeoClientHints,
   buildFeedDiagnostics,
   logFeedServe,
 };

@@ -10,6 +10,8 @@
  */
 
 const { fetchWithRetry } = require('../httpFetch');
+const { importanceFieldsForSourceMeta } = require('../aircraftImportance');
+const { countriesFromOpenskyOrigin } = require('../openskyCountryIso');
 
 const ID = 'opensky_live';
 const HOSTS = ['opensky-network.org'];
@@ -341,7 +343,18 @@ function parseStatesPayload(json) {
   return rows;
 }
 
-function eventFromRow(row) {
+function clusterGridKey(lat, lng) {
+  const la = Number(lat);
+  const ln = Number(lng);
+  if (!Number.isFinite(la) || !Number.isFinite(ln)) return 'na';
+  return `${Math.round(la * 2) / 2}_${Math.round(ln * 2) / 2}`;
+}
+
+function eventFromRow(row, opts = {}) {
+  const localClusterCount =
+    opts.localClusterCount != null && Number.isFinite(Number(opts.localClusterCount))
+      ? Math.max(1, Math.floor(Number(opts.localClusterCount)))
+      : 1;
   const {
     icao24,
     callsign,
@@ -371,6 +384,16 @@ function eventFromRow(row) {
     baroAltitude,
     velocity,
   });
+  const importance = importanceFieldsForSourceMeta({
+    lat: latitude,
+    lng: longitude,
+    hints,
+    squawk,
+    velocity,
+    baroAltitude,
+    localClusterCount,
+  });
+  const countries = countriesFromOpenskyOrigin(originCountry);
   const roleBits = [];
   if (hints.includes('cargo_air_candidate')) roleBits.push('cargo');
   if (hints.includes('military_air_candidate')) roleBits.push('mil-style');
@@ -420,9 +443,13 @@ function eventFromRow(row) {
     event_type: 'aviation',
     lat: Number(latitude),
     lng: Number(longitude),
+    countries,
     confidence: 0.82,
     verification_state: 'telemetry',
     tags,
+    aircraft_importance: importance.aircraft_importance,
+    aircraft_importance_reason: importance.aircraft_importance_reason,
+    aircraft_importance_reasons: importance.aircraft_importance_reasons,
     source_meta: {
       provider: 'opensky',
       icao24: icao,
@@ -439,6 +466,8 @@ function eventFromRow(row) {
       emitter_category: emitterCategory,
       emitter_category_label: emitterCatLabel,
       aviation_hints: hints,
+      local_cluster_count: localClusterCount,
+      ...importance,
     },
   };
 }
@@ -516,9 +545,16 @@ module.exports = {
     }
     const unique = [...merged.values()].sort((a, b) => b.score - a.score);
     const cap = Math.min(adapterCap, 72, unique.length);
+    const clusterMap = new Map();
+    for (const row of unique) {
+      const ck = clusterGridKey(row.latitude, row.longitude);
+      clusterMap.set(ck, (clusterMap.get(ck) || 0) + 1);
+    }
     const items = [];
     for (let i = 0; i < cap; i += 1) {
-      items.push(eventFromRow(unique[i]));
+      const row = unique[i];
+      const ck = clusterGridKey(row.latitude, row.longitude);
+      items.push(eventFromRow(row, { localClusterCount: clusterMap.get(ck) || 1 }));
     }
 
     const fetchedCount = collected.length;

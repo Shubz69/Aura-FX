@@ -75,3 +75,26 @@ test('changing category does not blank globe when markers exist', () => {
   rerender(<SurveillanceGlobe events={sampleEvents} activeCategory="conflict" selectedId={null} />);
   expect(latestProps.pointsData.length).toBeGreaterThan(0);
 });
+
+test('aviation category still renders points when feed is aviation-heavy', () => {
+  const aviationHeavy = [
+    {
+      id: 'os-1',
+      title: 'ADS-B · TEST123',
+      summary: 'Live ADS-B',
+      event_type: 'aviation',
+      rank_score: 70,
+      severity: 2,
+      lat: 50.9,
+      lng: 1.4,
+      source: 'opensky_live',
+      tags: ['live_track', 'ads-b'],
+      aircraft_importance: 'high',
+      aircraft_importance_reason: 'near_hotspot',
+    },
+  ];
+  const { rerender } = render(<SurveillanceGlobe events={aviationHeavy} activeCategory="all" selectedId={null} />);
+  expect(latestProps.pointsData.length).toBeGreaterThan(0);
+  rerender(<SurveillanceGlobe events={aviationHeavy} activeCategory="aviation" selectedId={null} />);
+  expect(latestProps.pointsData.length).toBeGreaterThan(0);
+});

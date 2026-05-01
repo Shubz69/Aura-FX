@@ -296,8 +296,8 @@ async function getSystemHealthSummary() {
       note:
         'Figures reflect configured public HTML adapters and recent ingest only — not exhaustive real-world coverage.',
       observability: {
-        aviation: 'authority_press_only',
-        maritime: 'authority_press_only',
+        aviation: 'opensky_adsb_when_configured_plus_press',
+        maritime: 'official_press_and_optional_ais_opt_in',
       },
     },
     underperformingFamilies,

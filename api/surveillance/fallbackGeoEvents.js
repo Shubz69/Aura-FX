@@ -1,6 +1,6 @@
 /**
  * Structured demo / fallback geospatial events when live ingest returns few or no
- * map-plottable rows (missing OpenSky/Datalastic keys, DB empty, or filters).
+ * map-plottable rows (missing OpenSky credentials, DB empty, or filters).
  * Never impersonates live telemetry — each row is tagged is_demo + data_mode.
  */
 
@@ -102,7 +102,7 @@ const FALLBACK_DEMO_EVENTS = [
     suffix: 'ship-suez',
     title: '[Demo] Sample merchant shipping — Suez approaches',
     summary:
-      'Synthetic vessel marker. Configure DATALASTIC_API_KEY for live AIS near this hub.',
+      'Synthetic vessel marker for map readiness. Live vessel positions are not used; official maritime and geopolitical feeds plus this labelled demo layer cover the grid when the map is sparse.',
     event_type: 'maritime',
     lat: 29.95,
     lng: 32.55,
@@ -110,7 +110,7 @@ const FALLBACK_DEMO_EVENTS = [
     countries: ['EG'],
     marker_kind: 'naval',
     severity: 2,
-    why_matters: 'Demo only — maritime layer placeholder; live AIS requires Datalastic.',
+    why_matters: 'Demo only — maritime layer placeholder; not live ship tracking.',
     tags: ['maritime', 'shipping', 'logistics', 'demo'],
   }),
   demoEvent({

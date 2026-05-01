@@ -39,7 +39,6 @@ const ADAPTER_FAMILY = {
   wto_news: 'trade_policy',
   canada_transport_news: 'logistics_transport',
   opensky_live: 'aviation',
-  datalastic_ais_live: 'maritime',
   dvids_news_rss: 'defense_press',
   uk_mod_rss: 'defense_press',
   gcaptain_rss: 'maritime',
@@ -85,7 +84,6 @@ const ADAPTER_REGION = {
   uk_mod_rss: 'eu',
   gcaptain_rss: 'global',
   opensky_live: 'global',
-  datalastic_ais_live: 'global',
 };
 
 const REGIONS = ['na', 'sa', 'eu', 'mea', 'ssa', 'apac', 'global'];
@@ -224,7 +222,7 @@ function aviationMaritimeHealthSummary(states) {
       adapterCount: marTotal,
       freshOrWarm: marFresh,
       staleOrNever: marStale,
-      note: 'IMO/gCaptain maritime trade press plus institutional notices; ship AIS tracks require a dedicated AIS provider.',
+      note: 'IMO/gCaptain maritime trade press plus institutional notices. Live ship AIS is an optional paid add-on (off by default); labelled demo markers may appear when the map is sparse.',
     },
   };
 }

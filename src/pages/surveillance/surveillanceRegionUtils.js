@@ -136,6 +136,37 @@ export function primaryCountryFromEvent(e) {
   return null;
 }
 
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/** Geo-tagged aviation / live tracks within ~920 km of country centroid (overflight + regional activity). */
+export function eventProximityMatchesCountryIso(e, iso2) {
+  if (!iso2 || !/^[A-Z]{2}$/.test(String(iso2).toUpperCase())) return false;
+  const iso = String(iso2).toUpperCase();
+  const c = SURV_ISO_CENTROID[iso];
+  if (!c) return false;
+  const lat = Number(e?.lat);
+  const lng = Number(e?.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  const et = String(e?.event_type || '').toLowerCase();
+  const src = String(e?.source || '').toLowerCase();
+  const tags = Array.isArray(e?.tags) ? e.tags : [];
+  const aviationLike =
+    et === 'aviation' ||
+    src.includes('opensky') ||
+    tags.some((t) => /ads-b|live_track|opensky|adsb/i.test(String(t)));
+  if (!aviationLike) return false;
+  return haversineKm(lat, lng, c[0], c[1]) <= 920;
+}
+
 /** True if event belongs to focus key (ISO2 country code or region label). */
 export function eventMatchesFocus(e, focusKey) {
   if (!focusKey) return true;
@@ -144,7 +175,33 @@ export function eventMatchesFocus(e, focusKey) {
   const countries = e?.countries;
   if (Array.isArray(countries) && countries.some((c) => normalizeRegionKey(c) === f)) return true;
   if (e?.region && normalizeRegionKey(e.region) === f) return true;
+  if (/^[A-Z]{2}$/.test(f) && eventProximityMatchesCountryIso(e, f)) return true;
   return false;
+}
+
+/**
+ * When country lens is active: notice if there are no strict-origin/in-country rows but regional aviation exists.
+ * @param {string|null} focusIso2
+ * @param {object[]} events
+ */
+export function regionalAviationLensNotice(focusIso2, events) {
+  if (!focusIso2 || !/^[A-Z]{2}$/.test(String(focusIso2).toUpperCase())) return null;
+  const iso = String(focusIso2).toUpperCase();
+  const list = Array.isArray(events) ? events : [];
+  const aviation = list.filter((ev) => {
+    if (String(ev?.event_type || '').toLowerCase() !== 'aviation') return false;
+    const la = Number(ev?.lat);
+    const ln = Number(ev?.lng);
+    return Number.isFinite(la) && Number.isFinite(ln);
+  });
+  if (!aviation.length) return null;
+  const strict = aviation.filter(
+    (ev) => Array.isArray(ev.countries) && ev.countries.some((c) => normalizeRegionKey(c) === iso)
+  );
+  if (strict.length) return null;
+  const regional = aviation.filter((ev) => eventProximityMatchesCountryIso(ev, iso));
+  if (!regional.length) return null;
+  return 'No aircraft in selected country; showing nearest regional activity.';
 }
 
 export function filterEventsByFocus(events, focusKey) {

@@ -16,6 +16,7 @@ const {
   computeRankScore,
   disruptionBoostFromRecord,
 } = require('./scoring');
+const { enrichAviationEvent } = require('./aircraftImportance');
 
 /** Tape ordering: blend editorial rank with freshness so stale rows do not crowd out recent material. */
 const SURV_FEED_ORDER_SQL =
@@ -42,7 +43,7 @@ function rowToEvent(r) {
       return null;
     }
   };
-  return {
+  const base = {
     id: String(r.id),
     source: r.source,
     source_type: r.source_type,
@@ -82,6 +83,7 @@ function rowToEvent(r) {
     story_signature: r.story_signature || null,
     source_meta: parseJsonObject(r.source_meta),
   };
+  return enrichAviationEvent(base);
 }
 
 async function countSimilarTopics(normalizedTopic, excludeContentHash) {

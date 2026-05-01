@@ -20,9 +20,11 @@ const {
   providerEnvFlags,
   adapterSnapshotForLiveGeo,
   geoTaggedEventCounts,
+  buildLiveGeoClientHints,
   buildFeedDiagnostics,
   logFeedServe,
 } = require('./feedDiagnostics');
+const { enrichAviationEvent } = require('./aircraftImportance');
 
 /** Temporary deploy probe: if missing in Network, production is not this API build. */
 const SURVEILLANCE_API_VERSION = 'diagnostics-d6354e6e-stale-detail';
@@ -98,7 +100,8 @@ module.exports = async (req, res) => {
     const liveCount = eventsRaw.length;
     const geoTaggedLive = countGeoTagged(eventsRaw);
     const mergeResult = mergeGeoFallback(eventsRaw, { countryIso2: null, minGeoMarkers: 4, tab: null });
-    const events = mergeResult.events;
+    const envSnapshot = providerEnvFlags();
+    const events = mergeResult.events.map((e) => enrichAviationEvent(e));
     const feedDiag = buildFeedDiagnostics({
       liveEventCount: liveCount,
       geoTaggedLive,
@@ -110,7 +113,7 @@ module.exports = async (req, res) => {
     });
     logFeedServe('bootstrap', {
       ...feedDiag,
-      providerEnv: providerEnvFlags(),
+      providerEnv: envSnapshot,
       liveGeoAdapters,
     });
     const aggregates = await computeAggregates(events);
@@ -161,7 +164,8 @@ module.exports = async (req, res) => {
       serverTime: new Date().toISOString(),
       surveillanceApiVersion: SURVEILLANCE_API_VERSION,
       surveillanceDiagnostics: {
-        providerEnv: providerEnvFlags(),
+        providerEnv: envSnapshot,
+        liveGeoHints: buildLiveGeoClientHints(liveGeoAdapters, envSnapshot),
         geoTaggedEventCounts: geoCounts,
         liveGeoAdapters,
         fallbackInjected: mergeResult.mergedDemoCount > 0,

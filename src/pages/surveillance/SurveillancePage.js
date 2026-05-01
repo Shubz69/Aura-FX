@@ -15,6 +15,7 @@ import {
   formatRecencyLabel,
   normalizeRegionKey,
   primaryCountryFromEvent,
+  regionalAviationLensNotice,
   severityUrgencySlug,
 } from './surveillanceRegionUtils';
 import {
@@ -204,6 +205,11 @@ export default function SurveillancePage() {
   const focusSummary = useMemo(
     () => focusSummaryFromEvents(focusRegion, displayEvents),
     [focusRegion, displayEvents]
+  );
+
+  const regionalAviationNotice = useMemo(
+    () => regionalAviationLensNotice(focusCountryIso, displayEvents),
+    [focusCountryIso, displayEvents]
   );
   const countryIntel = useMemo(
     () =>
@@ -562,8 +568,18 @@ export default function SurveillancePage() {
               <div className="sv-masthead-status-main">
                 <span>
                   Server added {surveillanceDiag.feed.mergedDemoCount} synthetic map markers (tape and drawer show Demo).
-                  Not live ADS-B or AIS — configure OpenSky and Datalastic keys for live tracks.
+                  Configure OpenSky credentials for live ADS-B. Live vessel positions on water are not enabled — maritime
+                  context uses public reports and labelled demo markers when needed.
                 </span>
+              </div>
+            </div>
+          ) : null}
+          {surveillanceDiag?.liveGeoHints?.messages?.length ? (
+            <div className="sv-masthead-status" role="status">
+              <div className="sv-masthead-status-main">
+                {surveillanceDiag.liveGeoHints.messages.map((m, idx) => (
+                  <span key={`lg-hint-${idx}`}>{m}</span>
+                ))}
               </div>
             </div>
           ) : null}
@@ -620,6 +636,11 @@ export default function SurveillancePage() {
 
         {focusRegion && focusSummary ? (
           <div className="sv-hero-context" aria-live="polite">
+            {regionalAviationNotice ? (
+              <span className="sv-hero-context-regional" role="note">
+                {regionalAviationNotice}
+              </span>
+            ) : null}
             <span className="sv-hero-context-label">{t('surveillance.sectorLens')}</span>
             <span className="sv-hero-context-name">{focusSummary.label || focusRegion}</span>
             {focusSummary.isoHint ? (

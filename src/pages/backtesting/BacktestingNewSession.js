@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Api from '../../services/Api';
 import { toast } from 'react-toastify';
+import InstrumentCombobox from './InstrumentCombobox';
 
 const defaultStrategyContext = () => ({
   entryModel: '',
@@ -274,8 +275,7 @@ export default function BacktestingNewSession() {
         </h2>
         <div className="bt-form-grid bt-quickstart-grid">
           <div>
-            <label className="bt-label">Instrument</label>
-            <input className="bt-input" value={instrument} onChange={(e) => setInstrument(e.target.value)} placeholder="EURUSD" />
+            <InstrumentCombobox value={instrument} onChange={setInstrument} disabled={saving} />
           </div>
           <div>
             <label className="bt-label">Timeframe</label>

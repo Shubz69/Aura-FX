@@ -241,6 +241,31 @@ export function normalizeSymbol(input) {
   return normalized;
 }
 
+let terminalInstrumentSearchRowsCache = null;
+
+/**
+ * Precomputed rows for instrument combobox search (id, label, category, haystack includes alias keys).
+ */
+export function getTerminalInstrumentSearchRows() {
+  if (terminalInstrumentSearchRowsCache) return terminalInstrumentSearchRowsCache;
+  const aliasExtras = new Map();
+  for (const [alias, id] of SYMBOL_ALIASES.entries()) {
+    if (!aliasExtras.has(id)) aliasExtras.set(id, []);
+    aliasExtras.get(id).push(String(alias).toLowerCase());
+  }
+  terminalInstrumentSearchRowsCache = TERMINAL_INSTRUMENTS.map((x) => ({
+    id: x.id,
+    label: x.label,
+    category: x.category,
+    haystack: [x.id, x.label, x.category, ...(aliasExtras.get(x.id) || [])]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .replace(/\s+/g, ' '),
+  }));
+  return terminalInstrumentSearchRowsCache;
+}
+
 export function getInstrumentById(id) {
   const normalized = normalizeSymbol(id);
   if (!normalized) return null;

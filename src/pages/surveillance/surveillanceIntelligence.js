@@ -323,6 +323,11 @@ function listTopSymbols(events, limit = 6) {
     .map(([symbol]) => symbol);
 }
 
+function aircraftImportanceRank(ev) {
+  const o = { critical: 4, high: 3, notable: 2, routine: 1 };
+  return o[String(ev?.aircraft_importance || '').toLowerCase()] || 0;
+}
+
 export function buildCountryIntel({ focusRegion, events, wireHeadlines, wireServiceAvailable }) {
   if (!focusRegion) return null;
   const iso = normalizeRegionKey(focusRegion);
@@ -335,7 +340,16 @@ export function buildCountryIntel({ focusRegion, events, wireHeadlines, wireServ
       : sev >= 3
         ? 'Moderate pressure: potential FX and sector rotation impact around key headlines.'
         : 'Limited immediate pressure: keep this region on watch for escalation.';
-  const topEvents = scoped.slice(0, 5);
+  const scopedRanked = [...scoped].sort((a, b) => {
+    const ar = aircraftImportanceRank(b) - aircraftImportanceRank(a);
+    if (ar !== 0) return ar;
+    return (Number(b.rank_score) || 0) - (Number(a.rank_score) || 0);
+  });
+  const topEvents = scopedRanked.slice(0, 5);
+  const aviationScoped = scoped.filter((e) => String(e?.event_type || '').toLowerCase() === 'aviation');
+  const aviationHighlights = [...aviationScoped]
+    .sort((a, b) => aircraftImportanceRank(b) - aircraftImportanceRank(a))
+    .slice(0, 6);
   const impactedInstruments = listTopSymbols(scoped, 8);
   const headlines =
     wireHeadlines && wireHeadlines.length
@@ -369,6 +383,9 @@ export function buildCountryIntel({ focusRegion, events, wireHeadlines, wireServ
     marketImpactLevel,
     marketImpactScore: impactScore,
     keyEvents: topEvents,
+    aviation_activity_count: aviationScoped.length,
+    aviation_highlights: aviationHighlights,
+    empty_key_events: topEvents.length === 0,
     marketImpactSummary,
     impactedInstruments,
     sectors: ['FX', 'Indices', 'Commodities', 'Oil/Gas', 'Gold', 'Defence', 'Shipping'],

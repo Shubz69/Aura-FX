@@ -35,7 +35,8 @@ const {
   getFallbackEventById,
   FALLBACK_DEMO_EVENTS,
 } = require('../api/surveillance/fallbackGeoEvents');
-const { buildFeedDiagnostics } = require('../api/surveillance/feedDiagnostics');
+const { buildFeedDiagnostics, buildLiveGeoClientHints, providerEnvFlags } = require('../api/surveillance/feedDiagnostics');
+const { computeAircraftImportance } = require('../api/surveillance/aircraftImportance');
 
 let passed = 0;
 let failed = 0;
@@ -653,6 +654,62 @@ describe('Surveillance geo fallback', () => {
     });
     if (d.mergedDemoCount !== 5) throw new Error('diag');
     if (d.demoLabel !== 'synthetic_geo_markers') throw new Error('label');
+  });
+});
+
+describe('Aviation importance + live geo hints', () => {
+  it('computeAircraftImportance marks military + hotspot as high or notable', () => {
+    const r = computeAircraftImportance({
+      lat: 48.5,
+      lng: 35.0,
+      hints: ['military_air_candidate'],
+      squawk: '',
+      velocity: 220,
+      baroAltitude: 10000,
+      localClusterCount: 1,
+    });
+    if (!r.aircraft_importance || r.aircraft_importance === 'routine') throw new Error('expected non-routine');
+    if (!String(r.aircraft_importance_reason || '').length) throw new Error('reason');
+  });
+
+  it('buildLiveGeoClientHints has OpenSky + maritime policy (no paid vessel adapter)', () => {
+    const env = providerEnvFlags();
+    const h = buildLiveGeoClientHints(
+      [
+        {
+          adapter_id: 'opensky_live',
+          last_success_at: '2026-01-01T00:00:00.000Z',
+          last_ingest_run: {
+            fetched_count: 12,
+            normalized_emitted: 10,
+            opensky_fetched_count: 12,
+            opensky_normalized_emitted: 10,
+          },
+          events_written_24h: 40,
+        },
+      ],
+      env
+    );
+    if (!h.opensky) throw new Error('opensky hints');
+    if (h.datalastic != null) throw new Error('datalastic hints must not exist');
+    if (!h.maritime_context || h.maritime_context.live_vessel_tracking_enabled !== false) {
+      throw new Error('expected live_vessel_tracking_enabled false');
+    }
+    const msg = (h.messages || []).join(' ');
+    if (!msg.includes('Live vessel tracking not enabled')) throw new Error('expected vessel policy message');
+  });
+
+  it('surveillance adapter registry has no paid vessel ingest module', () => {
+    const { ADAPTERS } = require('../api/surveillance/adapters');
+    const ids = ADAPTERS.map((a) => a.id);
+    if (ids.includes('datalastic_ais_live')) throw new Error('datalastic_ais_live must not be registered');
+    let fileGone = false;
+    try {
+      require.resolve('../api/surveillance/adapters/datalasticAisLive.js');
+    } catch {
+      fileGone = true;
+    }
+    if (!fileGone) throw new Error('datalasticAisLive.js should be removed');
   });
 });
 

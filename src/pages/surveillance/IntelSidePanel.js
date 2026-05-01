@@ -131,6 +131,41 @@ function IntelSidePanel({
           <p className="sv-rail-section-hint sv-rail-section-hint--tight">
             <strong>Market Impact Score:</strong> {countryIntel.marketImpactLevel} ({countryIntel.marketImpactScore})
           </p>
+          <p className="sv-rail-section-hint sv-rail-section-hint--tight">
+            <strong>Aviation activity near region:</strong>{' '}
+            {countryIntel.aviation_activity_count
+              ? `${countryIntel.aviation_activity_count} live or recent aviation rows in this lens (includes regional proximity).`
+              : 'No geo-tagged aviation in this lens right now — maritime and macro items may still matter.'}
+          </p>
+          {countryIntel.aviation_highlights?.length ? (
+            <ul className="sv-rail-list">
+              {countryIntel.aviation_highlights.map((ev) => (
+                <li key={`country-av-${ev.id}`}>
+                  <button
+                    type="button"
+                    className="sv-rail-row"
+                    data-urgency={severityUrgencySlug(ev.severity)}
+                    onClick={() => onOpenEvent(ev.id)}
+                  >
+                    <span className="sv-rail-row-eyebrow">
+                      Aviation · {ev.aircraft_importance || 'routine'}
+                      {ev.aircraft_importance_reason ? ` · ${ev.aircraft_importance_reason}` : ''}
+                    </span>
+                    <span className="sv-rail-row-meta">
+                      Market Impact {ev.market_impact_level || 'Low'} ({ev.market_impact_score_scaled || '—'})
+                    </span>
+                    <span className="sv-rail-row-title">{ev.title}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {countryIntel.empty_key_events ? (
+            <p className="sv-rail-empty sv-rail-empty--tight">
+              No ranked tape events in this country lens yet. Use the global tape, wire headlines, and aviation list
+              above — or clear the lens to widen geography.
+            </p>
+          ) : null}
           <ul className="sv-rail-list">
             {countryIntel.keyEvents.map((ev) => (
               <li key={`country-ev-${ev.id}`}>

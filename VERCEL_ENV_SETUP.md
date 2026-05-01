@@ -89,12 +89,9 @@ Your OpenAI API key needs to be added to Vercel environment variables for the Pr
 - ✅ Git protection: All key files are gitignored
 - ✅ Token system: Set JWT_SECRET in Vercel for production to enable secure signing and clear log warnings
 
-## Datalastic AIS credits (surveillance ingest)
+## Surveillance maritime (no paid vessel telemetry)
 
-- **Only** `/api/cron/surveillance-ingest` (every 5 minutes in `vercel.json`) runs the `datalastic_ais_live` adapter. **`/api/cron/surveillance-tracks` does not call Datalastic** (OpenSky only).
-- **Stop all Datalastic HTTP:** set any of **`DATALASTIC_ADAPTER_DISABLED=true`**, **`DATALASTIC_AIS_ADAPTER_DISABLED=true`**, or **`DATALASTIC_DISABLED=true`** in Vercel (Production and Preview if previews run the same cron). Redeploy.
-- **Preview vs Production:** Vercel runs **cron jobs per deployment environment**. If Preview has the same env keys (`DATALASTIC_API_KEY`, `CRON_SECRET` / `VERCEL`), Preview can fire ingest on its own schedule and **double-spend credits**. Either remove the Datalastic key from Preview, set the kill switches on Preview only, or disable crons for Preview in the Vercel project settings.
-- **Verify zero calls:** after deploy, search Vercel logs for `Datalastic disabled: skipping fetch` or `Datalastic actual calls made: 0` when disabled; when enabled, `Datalastic actual calls made: N` should match low **N** (defaults cap at 1 hub query per run unless you raise `DATALASTIC_AIS_MAX_CALLS_PER_RUN` and `DATALASTIC_AIS_CALLS_PER_RUN`).
+Aura Surveillance does **not** ship paid AIS / live vessel position providers. Maritime context comes from **public/official HTML & RSS adapters** (e.g. IMO, trade press) plus **clearly labelled demo/fallback map markers** when the live feed is sparse. `/api/cron/surveillance-tracks` refreshes **OpenSky ADS-B** only.
 
 ## Preview deployments: 401 on `manifest.json` (and other static files)
 
