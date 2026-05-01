@@ -1,10 +1,17 @@
 // @ts-check
 /**
- * Production retest: /backtesting/new → Start Replay → workspace + candles.
+ * Production retest (hard-refresh after Vercel deploy):
+ * /backtesting/new → type "xau" → pick XAUUSD → Start Replay → workspace → Load candles.
+ *
+ * Network expectations:
+ * - POST /api/backtesting/sessions → 201 OR PATCH /api/backtesting/sessions/:id → 200
+ * - GET /api/backtesting/sessions/:id → 200
+ * - GET /api/backtesting/saved-trades → 200 (Vercel must rewrite to api/backtesting.js)
+ * - GET /api/backtesting/candles → 200 after clicking Load
  *
  * Auth (pick one):
- * - Set AURA_PRODUCTION_LOGIN_EMAIL + AURA_PRODUCTION_LOGIN_PASSWORD (API login before each test), or
- * - Refresh e2e/reports/auraterminal-new-user.json (Playwright storageState) with a valid token.
+ * - AURA_PRODUCTION_LOGIN_EMAIL + AURA_PRODUCTION_LOGIN_PASSWORD (API login before each test), or
+ * - Valid e2e/reports/auraterminal-new-user.json storageState.
  *
  * Run:
  *   npx playwright test --config=playwright.backtesting-retest.config.js
@@ -13,7 +20,19 @@ import { test, expect, request } from '@playwright/test';
 
 test.describe.configure({ mode: 'serial' });
 
+/** @type {Array<{ url: string; method: string; status: number }>} */
+let network;
+
+function pathOf(u) {
+  try {
+    return new URL(u).pathname.replace(/\/+$/, '') || '/';
+  } catch {
+    return '';
+  }
+}
+
 test.beforeEach(async ({ context }) => {
+  network = [];
   const email = process.env.AURA_PRODUCTION_LOGIN_EMAIL;
   const password = process.env.AURA_PRODUCTION_LOGIN_PASSWORD;
   if (!email || !password) return;
@@ -72,48 +91,39 @@ test.beforeEach(async ({ context }) => {
   await api.dispose();
 });
 
-test('Quick Start → Start Replay (EURUSD, M15, 2026-01-14 04:12) + network sanity', async ({ page }) => {
-  const network = [];
-
-  page.on('response', async (resp) => {
+test('Quick Start: xau → XAUUSD → H1 → Start Replay + network checklist', async ({ page }) => {
+  page.on('response', (resp) => {
     const url = resp.url();
-    if (!/\/api\/backtesting\/(sessions|candles)/.test(url)) return;
-    const entry = {
+    if (!/\/api\/backtesting\/(sessions|candles|saved-trades)/.test(url)) return;
+    network.push({
       url,
-      status: resp.status(),
       method: resp.request().method(),
-    };
-    try {
-      const ct = resp.headers()['content-type'] || '';
-      if (ct.includes('application/json')) {
-        const body = await resp.json();
-        entry.body = body;
-      } else {
-        entry.bodyPreview = (await resp.text()).slice(0, 500);
-      }
-    } catch {
-      entry.bodyReadError = true;
-    }
-    network.push(entry);
+      status: resp.status(),
+    });
   });
 
   await page.goto('/backtesting/new', { waitUntil: 'load' });
-  await new Promise((r) => setTimeout(r, 500));
 
-  const onLoginRoute = page.url().includes('/login');
   const emailField = page.getByRole('textbox', { name: /email or username/i });
-  const loginUi = onLoginRoute || (await emailField.isVisible().catch(() => false));
+  const signInHeading = page.getByRole('heading', { name: /^sign in$/i });
+  const loginUi =
+    /\/(login|sign-in)\b/i.test(page.url()) ||
+    (await signInHeading.isVisible({ timeout: 2000 }).catch(() => false)) ||
+    (await emailField.isVisible({ timeout: 2000 }).catch(() => false));
   if (loginUi) {
     throw new Error(
-      'Not authenticated (login page or /login URL). JWT in e2e/reports/auraterminal-new-user.json is likely expired. ' +
+      'Not authenticated (sign-in UI). JWT in e2e/reports/auraterminal-new-user.json is likely expired. ' +
         'Re-export storage after signing in, or set AURA_PRODUCTION_LOGIN_EMAIL + AURA_PRODUCTION_LOGIN_PASSWORD for API login, then re-run: ' +
         'npx playwright test --config=playwright.backtesting-retest.config.js',
     );
   }
 
-  await expect(page.locator('.bt-quickstart-grid .bt-input').first()).toBeVisible({ timeout: 30_000 });
-  await page.locator('.bt-quickstart-grid .bt-input').first().fill('EURUSD');
-  await page.locator('.bt-quickstart-grid .bt-select').first().selectOption('M15');
+  const instrumentInput = page.getByLabel('Instrument');
+  await expect(instrumentInput).toBeVisible({ timeout: 30_000 });
+  await instrumentInput.fill('xau');
+  await page.getByRole('option', { name: /XAUUSD/i }).click();
+
+  await page.locator('.bt-quickstart-grid .bt-select').first().selectOption('H1');
   await page.locator('.bt-quickstart-grid input[type="datetime-local"]').first().fill('2026-01-14T04:12');
 
   await page.getByRole('button', { name: 'Start Replay' }).click();
@@ -126,19 +136,48 @@ test('Quick Start → Start Replay (EURUSD, M15, 2026-01-14 04:12) + network san
     fivexx.length ? `Unexpected 5xx:\n${JSON.stringify(fivexx, null, 2)}` : '',
   ).toEqual([]);
 
-  const hadSessions = network.some((r) => /\/api\/backtesting\/sessions/.test(r.url));
-  const hadCandles = network.some((r) => /\/api\/backtesting\/candles/.test(r.url));
-  expect(hadSessions, 'Expected at least one /api/backtesting/sessions request').toBe(true);
-  expect(hadCandles, 'Expected /api/backtesting/candles request after workspace load').toBe(true);
+  const p = (u) => pathOf(u);
+  const sessionIdInUrl = page.url().match(/\/backtesting\/session\/([a-f0-9-]{36})/i)?.[1];
 
-  const badJson = network.filter((r) => {
-    const b = r.body;
-    return b && typeof b === 'object' && b.success === false && r.status >= 400;
-  });
+  const postSessions = network.filter((r) => r.method === 'POST' && p(r.url) === '/api/backtesting/sessions');
+  const patchSessions = network.filter(
+    (r) => r.method === 'PATCH' && /^\/api\/backtesting\/sessions\/[a-f0-9-]{36}$/i.test(p(r.url)),
+  );
   expect(
-    badJson.filter((r) => r.status >= 500),
-    JSON.stringify(badJson.filter((r) => r.status >= 500), null, 2),
-  ).toEqual([]);
+    postSessions.some((r) => r.status === 201) || patchSessions.some((r) => r.status === 200),
+    `Expected POST /api/backtesting/sessions → 201 (new session) or PATCH → 200 (draft path). post=${JSON.stringify(postSessions)} patch=${JSON.stringify(patchSessions)}`,
+  ).toBe(true);
+  expect(
+    patchSessions.some((r) => r.status === 200),
+    `Expected PATCH /api/backtesting/sessions/:id → 200, got: ${JSON.stringify(patchSessions)}`,
+  ).toBe(true);
+
+  const sid = sessionIdInUrl ? String(sessionIdInUrl).toLowerCase() : '';
+  const getSessionDetail = network.filter(
+    (r) => r.method === 'GET' && sid && p(r.url).toLowerCase() === `/api/backtesting/sessions/${sid}`,
+  );
+  expect(
+    getSessionDetail.some((r) => r.status === 200),
+    `Expected GET /api/backtesting/sessions/:id → 200 (id ${sid}), got: ${JSON.stringify(getSessionDetail)}`,
+  ).toBe(true);
+
+  const getSaved = network.filter((r) => r.method === 'GET' && p(r.url) === '/api/backtesting/saved-trades');
+  expect(
+    getSaved.some((r) => r.status === 200),
+    `Expected GET /api/backtesting/saved-trades → 200 (not 404; add vercel rewrite). Got: ${JSON.stringify(getSaved)}`,
+  ).toBe(true);
+
+  await page.getByRole('button', { name: /^Load$/i }).click();
+
+  await expect
+    .poll(
+      () => network.some((r) => r.method === 'GET' && p(r.url) === '/api/backtesting/candles' && r.status === 200),
+      { message: 'Expected GET /api/backtesting/candles → 200 after Load', timeout: 120_000 },
+    )
+    .toBe(true);
+
+  const candlesBad = network.filter((r) => p(r.url) === '/api/backtesting/candles' && r.status !== 200);
+  expect(candlesBad, JSON.stringify(candlesBad)).toEqual([]);
 
   await expect(page.locator('.bt-replay-chart canvas').first()).toBeVisible({ timeout: 120_000 });
 
