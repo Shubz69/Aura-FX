@@ -498,6 +498,7 @@ export default function TraderReplay() {
                     visibleBars={visibleBars}
                     trade={selectedTrade}
                     currentIndex={index}
+                    replayPlaying={playing}
                     recenterKey={recenterKey}
                     recenterTargetTime={recenterTargetTime}
                     symbol={selectedTrade.symbol}

@@ -530,6 +530,7 @@ export default function BacktestingWorkspace() {
                 visibleBars={visibleBars}
                 currentIndex={cursor}
                 fitLayoutKey={chartFitKey}
+                replayPlaying={playing}
                 openTrades={openTrades}
                 closedTrades={closedTrades}
                 symbol={controls.instrument}

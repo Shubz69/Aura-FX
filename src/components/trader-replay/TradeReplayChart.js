@@ -21,6 +21,32 @@ const TOOLS = [
   { id: 'tp', label: 'TP', title: 'Take profit line' },
 ];
 
+/** Logical bars visible on each side of the playhead (≈compact candle density across timeframes). */
+const REPLAY_HALF_WINDOW_BARS = 88;
+/** Extra logical indexes past last bar so there is whitespace “ahead” of price while replaying. */
+const REPLAY_RIGHT_WHITESPACE = 48;
+
+/**
+ * Keep the latest bar near the horizontal middle with room on the right; replaces fitting all candles.
+ */
+function applyComfortableReplayRange(ts, logicalLen, centerLogicalIdx) {
+  if (!logicalLen || !ts) return;
+  const lastIdx = logicalLen - 1;
+  if (lastIdx < 0) return;
+  const center = Math.min(Math.max(centerLogicalIdx, 0), lastIdx);
+  const half = REPLAY_HALF_WINDOW_BARS;
+  let from = center - half;
+  let to = center + half + REPLAY_RIGHT_WHITESPACE;
+  from = Math.max(0, from);
+  const minSpan = Math.min(48, logicalLen + REPLAY_RIGHT_WHITESPACE + 12);
+  if (to - from < minSpan) to = from + minSpan;
+  try {
+    ts.setVisibleLogicalRange({ from, to });
+  } catch (_) {
+    /* noop */
+  }
+}
+
 export default function TradeReplayChart({
   bars,
   visibleBars,
@@ -29,6 +55,7 @@ export default function TradeReplayChart({
   fitLayoutKey: fitLayoutKeyProp,
   recenterKey = 0,
   recenterTargetTime = null,
+  replayPlaying = false,
   openTrades = [],
   closedTrades = [],
   annotations = [],
@@ -98,6 +125,9 @@ export default function TradeReplayChart({
         ...(auraChartVisualOptions().timeScale || {}),
         timeVisible: true,
         secondsVisible: false,
+        barSpacing: 4.75,
+        minBarSpacing: 2,
+        rightOffset: 6,
       },
     });
     chartRef.current = chart;
@@ -241,7 +271,7 @@ export default function TradeReplayChart({
     const wantsRecenter = lastAppliedRecenterKeyRef.current !== recenterKey;
 
     let savedRange = null;
-    if (hasFittedOnceRef.current && !wantsFullFit && !wantsRecenter) {
+    if (hasFittedOnceRef.current && !wantsFullFit && !wantsRecenter && !replayPlaying) {
       try {
         savedRange = ts.getVisibleLogicalRange();
       } catch (_) {
@@ -256,7 +286,7 @@ export default function TradeReplayChart({
       try {
         const span = 40;
         if (wantsFullFit) {
-          ts.fitContent();
+          applyComfortableReplayRange(ts, len, len - 1);
           hasFittedOnceRef.current = true;
           lastAppliedFitLayoutKeyRef.current = resolvedFitKey;
         } else if (wantsRecenter) {
@@ -270,6 +300,8 @@ export default function TradeReplayChart({
             hasFittedOnceRef.current = true;
           }
           lastAppliedRecenterKeyRef.current = recenterKey;
+        } else if (replayPlaying && hasFittedOnceRef.current && len > 0) {
+          applyComfortableReplayRange(ts, len, len - 1);
         } else if (
           hasFittedOnceRef.current
           && savedRange
@@ -282,7 +314,7 @@ export default function TradeReplayChart({
           if (to <= from) to = Math.min(hi, from + 4);
           ts.setVisibleLogicalRange({ from, to });
         } else if (!hasFittedOnceRef.current) {
-          ts.fitContent();
+          applyComfortableReplayRange(ts, len, len - 1);
           hasFittedOnceRef.current = true;
         }
       } catch (_) {
@@ -291,7 +323,7 @@ export default function TradeReplayChart({
     });
 
     return undefined;
-  }, [currentBars, fitLayoutKeyProp, recenterKey, recenterTargetTime]);
+  }, [currentBars, fitLayoutKeyProp, recenterKey, recenterTargetTime, replayPlaying]);
 
   /** Simulated-trade price lines */
   useEffect(() => {
@@ -463,7 +495,7 @@ export default function TradeReplayChart({
         style={{ width: '100%', height: 420, borderRadius: 10, overflow: 'hidden' }}
       />
       <div style={{ marginTop: 8, color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>
-        Candle {Math.max(0, currentIndex + 1)} / {bars?.length || 0} · zoom and pan preserve during replay
+        Candle {Math.max(0, currentIndex + 1)} / {bars?.length || 0} · Play keeps the chart centered on the last bar — pause to pan/zoom freely
       </div>
     </div>
   );
