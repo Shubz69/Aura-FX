@@ -9,17 +9,82 @@ import {
   normalizeRegionKey,
 } from './surveillanceRegionUtils';
 import { markerIconForKind, markerKindFromEvent } from './surveillanceIntelligence';
+// ⭐ ADD SOUND SYSTEM
+const SOUNDS = {
+  criticalAlert: null,
+  newMarker: null,
+  hover: null,
+};
 
+function initSounds() {
+  if (typeof window === 'undefined' || typeof AudioContext === 'undefined') return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Critical alert - sharp ping
+    SOUNDS.criticalAlert = () => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(1200, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.3);
+    };
+    
+    // New marker - subtle click
+    SOUNDS.newMarker = () => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      gain.gain.setValueAtTime(0.04, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.08);
+    };
+    
+    // Hover - soft tick
+    SOUNDS.hover = () => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(600, ctx.currentTime);
+      gain.gain.setValueAtTime(0.03, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.05);
+    };
+  } catch (e) {
+    // Audio not available - silent fallback
+  }
+}
+
+// Initialize sounds
+if (typeof window !== 'undefined') {
+  initSounds();
+}
 const Globe = lazy(() => import('react-globe.gl').then((m) => ({ default: m.default })));
 
-/** Stable ref so react-globe does not treat heatmaps as changed every render. */
 const NO_HEATMAPS = [];
 
 const GLOBE_BASE = 'https://unpkg.com/three-globe@2.45.2/example/img';
-/** Tactical night basemap (Glint-style operating picture). */
 const GLOBE_TEXTURE_NIGHT = 'https://eoimages.gsfc.nasa.gov/images/imagerecords/79000/79765/dnb_land_ocean_ice.2012.3600x1800.jpg';
-/** Fallback if night texture fails to load. */
 const GLOBE_TEXTURE_LO = `${GLOBE_BASE}/earth-blue-marble.jpg`;
+// ⭐ NEW: Enhanced visual presets
+const ATMOSPHERE_PRESETS = {
+  day: { color: 'rgb(30, 40, 60)', altitude: 0.035 },
+  dusk: { color: 'rgb(40, 25, 50)', altitude: 0.045 },
+  night: { color: 'rgb(12, 18, 32)', altitude: 0.055 },
+};
+
+const STAR_COLORS = ['#ffffff', '#ffe9c4', '#c4d5ff', '#ffc4c4', '#c4ffe9'];
+const AURORA_COLORS = ['#00ff88', '#00ccff', '#ff00ff', '#ff6600'];
 
 let neGeoJsonCache = null;
 let neGeoJsonPromise = null;
@@ -33,7 +98,6 @@ function mulberry32(seed) {
   };
 }
 
-/** 0 = day-ish, 1 = night — local clock, understated for atmosphere only */
 function nightFactorFromLocalTime(d = new Date()) {
   const t = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
   if (t >= 20.5 || t <= 4.5) return 1;
@@ -103,9 +167,9 @@ function clusterEvents(events, precision = 1) {
     count: b.count,
     maxSev: b.maxSev,
     maxSevScore: b.maxSevScore,
-   label: b.count > 1 
-  ? `<b>${b.count} events</b><br/>${b.label.slice(0, 60)}`
-  : `<b>${b.label}</b>`,
+    label: b.count > 1 
+      ? `<b>${b.count} events</b><br/>${b.label.slice(0, 60)}`
+      : `<b>${b.label}</b>`,
   }));
 }
 
@@ -120,7 +184,6 @@ function parseEventSourceMeta(ev) {
   }
 }
 
-/** Aviation vs defence-style tracks for marker colour (editorial grouping, not a legal classification). */
 function eventTrackKind(ev) {
   if (!ev) return 'intel';
   const meta = parseEventSourceMeta(ev);
@@ -177,7 +240,6 @@ function trackKindRank(kind) {
   return order[kind] ?? 0;
 }
 
-/** Visual weight 0…1 from backend aircraft_importance (OpenSky-enriched rows). */
 function aircraftImportanceImpulse(ev) {
   const t = String(ev?.aircraft_importance || '').toLowerCase();
   if (t === 'critical') return 1;
@@ -304,6 +366,86 @@ function clusterTouchesFocus(pt, idMap, focusRegion) {
   return false;
 }
 
+function pointLabelHTML(kind, impactLevel, isNew, isCritical) {
+  const icons = {
+    'aircraft': '✈',
+    'aviation_military': '✈',
+    'aviation_cargo': '✈',
+    'aviation': '✈',
+    'military': '◆',
+    'naval': '◆',
+    'submarine': '◆',
+    'conflict': '◆',
+    'energy': '●',
+    'trade_route': '●',
+    'default': '●'
+  };
+  
+  const icon = icons[kind] || icons['default'];
+  const color = kind.includes('aviation') ? '#ff9933' : 
+                kind === 'military' ? '#ee5544' : 
+                kind === 'naval' ? '#5599dd' : '#ccaa66';
+  
+  // ⭐ Pulse animation for critical/live markers
+  const animation = isCritical 
+    ? 'animation: criticalPulse 0.8s ease-in-out infinite;' 
+    : isNew 
+      ? 'animation: markerAppear 0.5s ease-out;'
+      : 'animation: subtleFloat 3s ease-in-out infinite;';
+  
+  return `<div style="
+    font-size: 16px;
+    font-weight: bold;
+    transform: translate(-50%, -50%);
+    filter: drop-shadow(0 0 ${isCritical ? '8px' : '4px'} ${color});
+    cursor: pointer;
+    pointer-events: auto;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    ${animation}
+  ">${icon}</div>`;
+}
+function createTacticalGrid(globeRadius) {
+  const group = new THREE.Group();
+  const segments = 36;
+  const material = new THREE.LineBasicMaterial({
+    color: 0x334455,
+    transparent: true,
+    opacity: 0.12,
+    depthTest: true,
+  });
+
+  // Latitude lines
+  for (let lat = -75; lat <= 75; lat += 15) {
+    const phi = (90 - lat) * (Math.PI / 180);
+    const r = globeRadius * 1.002 * Math.cos(phi);
+    const y = globeRadius * 1.002 * Math.sin(phi);
+    const points = [];
+    for (let i = 0; i <= segments; i++) {
+      const theta = (i / segments) * Math.PI * 2;
+      points.push(new THREE.Vector3(r * Math.cos(theta), y, r * Math.sin(theta)));
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    group.add(new THREE.Line(geo, material));
+  }
+
+  // Longitude lines
+  for (let lng = 0; lng < 360; lng += 15) {
+    const points = [];
+    for (let i = 0; i <= segments; i++) {
+      const phi = (i / segments) * Math.PI;
+      const x = globeRadius * 1.002 * Math.sin(phi) * Math.cos(lng * (Math.PI / 180));
+      const y = globeRadius * 1.002 * Math.cos(phi);
+      const z = globeRadius * 1.002 * Math.sin(phi) * Math.sin(lng * (Math.PI / 180));
+      points.push(new THREE.Vector3(x, y, z));
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    group.add(new THREE.Line(geo, material));
+  }
+
+  group.name = 'svTacticalGrid';
+  group.renderOrder = -200;
+  return group;
+}
 export default function SurveillanceGlobe({
   events,
   selectedId,
@@ -329,19 +471,13 @@ export default function SurveillanceGlobe({
   const [nightFactor, setNightFactor] = useState(() => nightFactorFromLocalTime());
   const [hoveredId, setHoveredId] = useState(null);
   const [hoveredPreview, setHoveredPreview] = useState(null);
+    const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 }); 
   const [globeReveal, setGlobeReveal] = useState(false);
   const [globeTextureUrl, setGlobeTextureUrl] = useState(GLOBE_TEXTURE_NIGHT);
-
-  useEffect(() => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => setGlobeTextureUrl(GLOBE_TEXTURE_NIGHT);
-    img.onerror = () => setGlobeTextureUrl(GLOBE_TEXTURE_LO);
-    img.src = GLOBE_TEXTURE_NIGHT;
-  }, []);
   const [polygonsData, setPolygonsData] = useState([]);
   const [loadedIsoCentroids, setLoadedIsoCentroids] = useState({});
   const [hoveredIso, setHoveredIso] = useState(null);
+  const [autoRotate, setAutoRotate] = useState(true);
 
   const eventsRef = useRef(events);
   eventsRef.current = events;
@@ -390,7 +526,19 @@ export default function SurveillanceGlobe({
       }),
     []
   );
-
+  // ⭐ Pause auto-rotation on user interaction
+  const userInteracting = useRef(false);
+  const interactionTimeout = useRef(null);
+  
+  const handleUserInteraction = useCallback(() => {
+    setAutoRotate(false);
+    userInteracting.current = true;
+    if (interactionTimeout.current) clearTimeout(interactionTimeout.current);
+    interactionTimeout.current = setTimeout(() => {
+      setAutoRotate(true);
+      userInteracting.current = false;
+    }, 8000); // Resume auto-rotate after 8 seconds of inactivity
+  }, []);
   const celestialObjectsData = useMemo(() => {
     if (povAltitude < 1.02) return [];
     const nf = nightFactor;
@@ -419,20 +567,20 @@ export default function SurveillanceGlobe({
     [moonGeometry, moonMaterial, rockyPlanetGeometry, rockyPlanetMaterial, gasPlanetGeometry, gasPlanetMaterial]
   );
 
-  const sceneBackground = useMemo(
-    () => hexLerpColor('#060714', '#02030a', nightFactor * 0.78),
-    [nightFactor]
-  );
+const sceneBackground = useMemo(
+  () => {
+    const nf = nightFactor;
+    const r = Math.round(6 + nf * 2);
+    const g = Math.round(8 + nf * 3);
+    const b = Math.round(14 + nf * 4);
+    return `rgb(${r}, ${g}, ${b})`;
+  },
+  [nightFactor]
+);
 
- const atmosphereColor = useMemo(() => {
-  const r = Math.round(12 + nightFactor * 6);
-  const g = Math.round(18 + nightFactor * 8);
-  const b = Math.round(32 + nightFactor * 12);
-  return `rgb(${r}, ${g}, ${b})`;
-}, [nightFactor]);
-const atmosphereAltitude = useMemo(() => 0.035 + nightFactor * 0.015, [nightFactor]);
 
-  const refineGlobeSurface = useCallback(() => {
+
+ const refineGlobeSurface = useCallback(() => {
     const g = globeRef.current;
     if (!g || typeof g.globeMaterial !== 'function' || typeof g.renderer !== 'function') return false;
     const mat = g.globeMaterial();
@@ -444,11 +592,22 @@ const atmosphereAltitude = useMemo(() => 0.035 + nightFactor * 0.015, [nightFact
     mat.map.magFilter = THREE.LinearFilter;
     mat.map.generateMipmaps = true;
     mat.map.needsUpdate = true;
-mat.color = new THREE.Color(0xcccccc);   // Neutral — let texture show
-mat.shininess = 0.5;
-mat.specular = new THREE.Color(0x000000);
+    
+    // ⭐ Enhanced globe material
+      mat.color = new THREE.Color(0x8899aa);
+    mat.emissive = new THREE.Color(0x0a0f14);
+    mat.emissiveIntensity = 0.08;
+    mat.shininess = 0.3;
+    mat.specular = new THREE.Color(0x1a2a3a);
     mat.needsUpdate = true;
     return true;
+  }, []);
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => setGlobeTextureUrl(GLOBE_TEXTURE_NIGHT);
+    img.onerror = () => setGlobeTextureUrl(GLOBE_TEXTURE_LO);
+    img.src = GLOBE_TEXTURE_NIGHT;
   }, []);
 
   useEffect(() => {
@@ -464,26 +623,24 @@ mat.specular = new THREE.Color(0x000000);
     };
   }, []);
 
-useEffect(() => {
-  const el = wrapRef.current;
-  const panel = el?.parentElement;
-  const target = panel && panel.classList?.contains('sv-globe-panel') ? panel : el;
-  if (!target || typeof ResizeObserver === 'undefined') return undefined;
-  
-  const ro = new ResizeObserver((entries) => {
-    const cr = entries[0]?.contentRect;
-    if (cr && cr.width > 0 && cr.height > 0) {
-      // Use the FULL panel size - let CSS center the globe
-      // The globe will be square (aspect-ratio: 1) but centered in the panel
-      const w = Math.floor(cr.width);
-      const h = Math.floor(cr.height);
-      setDims({ w, h });
-    }
-  });
-  
-  ro.observe(target);
-  return () => ro.disconnect();
-}, []);
+  useEffect(() => {
+    const el = wrapRef.current;
+    const panel = el?.parentElement;
+    const target = panel && panel.classList?.contains('sv-globe-panel') ? panel : el;
+    if (!target || typeof ResizeObserver === 'undefined') return undefined;
+    
+    const ro = new ResizeObserver((entries) => {
+      const cr = entries[0]?.contentRect;
+      if (cr && cr.width > 0 && cr.height > 0) {
+        const w = Math.floor(cr.width);
+        const h = Math.floor(cr.height);
+        setDims({ w, h });
+      }
+    });
+    
+    ro.observe(target);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     if (dims.w < 200) return undefined;
@@ -533,27 +690,24 @@ useEffect(() => {
     };
   }, [globeReveal, dims.w, dims.h, refineGlobeSurface, globeTextureUrl]);
 
-
   const handleZoom = useCallback((pov) => {
     if (pov && typeof pov.altitude === 'number' && Number.isFinite(pov.altitude)) {
       setPovAltitude(pov.altitude);
     }
   }, []);
-// Add this inside SurveillanceGlobe function, after the other useEffects
-useEffect(() => {
-  const wrap = wrapRef.current;
-  if (!wrap) return;
 
-  const onWheel = (e) => {
-    if (!e.ctrlKey && !e.metaKey) {
-      e.stopPropagation();
-      // Let the event bubble to scroll the page
-    }
-  };
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const onWheel = (e) => {
+      if (!e.ctrlKey && !e.metaKey) {
+        e.stopPropagation();
+      }
+    };
+    wrap.addEventListener('wheel', onWheel, { passive: true, capture: true });
+    return () => wrap.removeEventListener('wheel', onWheel, { capture: true });
+  }, []);
 
-  wrap.addEventListener('wheel', onWheel, { passive: true, capture: true });
-  return () => wrap.removeEventListener('wheel', onWheel, { capture: true });
-}, []);
   useEffect(() => {
     moonMaterial.emissive.lerpColors(
       new THREE.Color(0x101420),
@@ -602,7 +756,7 @@ useEffect(() => {
     const scene = g.scene();
     const globeR = typeof g.getGlobeRadius === 'function' ? g.getGlobeRadius() : 100;
     const shellR = globeR * 4.65;
-   const count = reducedMotionRef.current ? 800 : 1500;
+    const count = reducedMotionRef.current ? 800 : 1500;
     const positions = new Float32Array(count * 3);
     const rnd = mulberry32(0x5c3e91d2);
     for (let i = 0; i < count; i++) {
@@ -618,26 +772,71 @@ useEffect(() => {
     const starGeo = new THREE.BufferGeometry();
     starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const rm0 = reducedMotionRef.current;
+      // ⭐ Enhanced stars with color variety and twinkle
+    const starColors = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const colorHex = STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)];
+      const color = new THREE.Color(colorHex);
+      starColors[i * 3] = color.r;
+      starColors[i * 3 + 1] = color.g;
+      starColors[i * 3 + 2] = color.b;
+    }
+    starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+    
+    // Tactical starfield - subdued, realistic density
     const starMat = new THREE.PointsMaterial({
-      color: 0xf2f4fc,
-      size: rm0 ? 0.065 : 0.085, 
+      size: rm0 ? 0.04 : 0.055,
       transparent: true,
-      opacity: 0.88,
+      opacity: 0.7,
       depthWrite: false,
       depthTest: true,
       sizeAttenuation: true,
       blending: THREE.AdditiveBlending,
+      vertexColors: true,
     });
-    const stars = new THREE.Points(starGeo, starMat);
+     const stars = new THREE.Points(starGeo, starMat);
     stars.name = 'svStarfield';
     stars.frustumCulled = false;
     stars.renderOrder = -500;
+
+    // ⭐ Deep layer - distant stars (moves slower)
+    const deepCount = Math.floor(count * 0.4);
+    const deepPositions = new Float32Array(deepCount * 3);
+    for (let i = 0; i < deepCount; i++) {
+      const u = rnd();
+      const v = rnd();
+      const theta = 2 * Math.PI * u;
+      const phi = Math.acos(2 * v - 1);
+      const r = shellR * (1.08 + 0.04 * rnd());
+      deepPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      deepPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      deepPositions[i * 3 + 2] = r * Math.cos(phi);
+    }
+    const deepStarGeo = new THREE.BufferGeometry();
+    deepStarGeo.setAttribute('position', new THREE.BufferAttribute(deepPositions, 3));
+    const deepStarMat = new THREE.PointsMaterial({
+      size: 0.035,
+      transparent: true,
+      opacity: 0.45,
+      depthWrite: false,
+      depthTest: true,
+      sizeAttenuation: true,
+      blending: THREE.AdditiveBlending,
+      color: 0x8899cc,
+    });
+    const deepStars = new THREE.Points(deepStarGeo, deepStarMat);
+    deepStars.name = 'svDeepStars';
+    deepStars.frustumCulled = false;
+    deepStars.renderOrder = -510;
 
     const group = new THREE.Group();
     group.name = 'svSpaceBackdrop';
     group.renderOrder = -500;
     group.add(stars);
+    group.add(deepStars);
     scene.add(group);
+     const grid = createTacticalGrid(globeR);
+    scene.add(grid);
     spaceBackdropRef.current = group;
 
     const controls = typeof g.controls === 'function' ? g.controls() : null;
@@ -663,8 +862,18 @@ useEffect(() => {
       } catch {
         /* ignore */
       }
-      group.rotation.set((pol - Math.PI / 2) * 0.047, drift + az * 0.055, 0, 'YXZ');
-
+         group.rotation.set((pol - Math.PI / 2) * 0.047, drift + az * 0.055, 0, 'YXZ');
+      
+      // ⭐ Parallax: deep stars rotate slower (0.3x speed) for depth effect
+      if (deepStars) {
+        deepStars.rotation.set(
+          (pol - Math.PI / 2) * 0.014,
+          drift * 0.3 + az * 0.016,
+          0,
+          'YXZ'
+        );
+      }
+      
       spaceAnimRef.current = requestAnimationFrame(tick);
     };
     tick();
@@ -690,10 +899,6 @@ useEffect(() => {
     nightFactorRef.current = nightFactor;
   }, [povAltitude, reducedMotion, nightFactor]);
 
-  /* Hex bins must stay on during country lens: turning them off switched the globe to global
-   * arcs (and previously heatmap) — extra layers caused severe lag until lens cleared.
-   * Heatmap layer is disabled: three-globe heatmap updates could throw under some WebGL timing paths. */
-  /* Under a country lens with a modest event count, prefer point markers (aviation / defence read) over hex bins. */
   const useHex = false;
 
   const rawPoints = useMemo(() => {
@@ -724,11 +929,8 @@ useEffect(() => {
   }, [events, activeCategory]);
 
   const hexPoints = useMemo(() => rawPoints, [rawPoints]);
-
   const arcs = useMemo(() => (useHex ? [] : buildArcs(events)), [events, useHex]);
-
-  /** Coarse pulse for marker styling only — avoids rebuilding point buffers every animation frame. */
-  const pulseStep = 0.5; // Fixed value, no animation flicker
+  const pulseStep = 0.5;
 
   const arcColor = useCallback((d) => {
     const s = d.sev != null ? Number(d.sev) : 1;
@@ -743,6 +945,7 @@ useEffect(() => {
     const idMap = new Map();
     for (const e of events) idMap.set(String(e.id), e);
     const list = clusterEvents(events, reducedMotion ? 0 : 1);
+    
     return list.map((p) => {
       const hot = p.maxSev >= 4 || p.maxSevScore >= 72;
       const pulseBoost = !reducedMotion && hot ? pulseStep * 0.022 : 0;
@@ -752,18 +955,24 @@ useEffect(() => {
       const muted = lens && !inFocus && !isSel;
       const dominantCategory = clusterDominantCategory(idMap, p);
       const categoryFocused = activeCat !== 'all' && dominantCategory === activeCat;
-      const liveCluster =
-        p.eventIds?.some((evId) => {
-          const ev = idMap.get(String(evId));
-          if (!ev) return false;
-          if (ev.source === 'opensky_live') return true;
-          const tg = ev.tags;
-          return Array.isArray(tg) && tg.some((t) => String(t).toLowerCase().includes('live_track'));
-        }) ?? false;
+      
+      const liveCluster = p.eventIds?.some((evId) => {
+        const ev = idMap.get(String(evId));
+        if (!ev) return false;
+        if (ev.source === 'opensky_live') return true;
+        const tg = ev.tags;
+        return Array.isArray(tg) && tg.some((t) => String(t).toLowerCase().includes('live_track'));
+      }) ?? false;
+      
       const trackKind = clusterDominantTrackKind(idMap, p);
       const liveMil = liveCluster && trackKind === 'aviation_military';
       const liveCargo = liveCluster && trackKind === 'aviation_cargo';
       const leadEvent = idMap.get(String(p.eventId));
+      
+      const isAviation = trackKind === 'aviation_military' || 
+                         trackKind === 'aviation_cargo' || 
+                         trackKind === 'aviation';
+      
       const airImp = aircraftImportanceImpulse(leadEvent);
       const impactLevel = String(leadEvent?.market_impact_level || '').toLowerCase();
       const impactScore = Number(leadEvent?.market_impact_score_scaled) || 0;
@@ -771,6 +980,7 @@ useEffect(() => {
       const highPriority = impactLevel === 'high' || impactLevel === 'critical';
       const lowPriority = impactLevel === 'low' && airImp < 0.48;
       const freshPriority = recencyWeight >= 0.88 && highPriority;
+      
       const color = isSel
         ? '#ffd9a8'
         : muted
@@ -792,51 +1002,62 @@ useEffect(() => {
                     : liveCluster && dominantCategory === 'aviation'
                       ? `rgba(${128 + Math.round(40 * airImp)}, ${234 - Math.round(20 * airImp)}, 255, ${0.72 + airImp * 0.24})`
                       : categoryColor(activeCat !== 'all' ? activeCat : dominantCategory);
+      
+        const isCritical = impactLevel === 'critical';
+      const isNew = recencyWeight >= 0.88;
+      
       return {
         ...p,
-        markerKind: trackKind === 'aviation_military' || trackKind === 'aviation_cargo' || trackKind === 'aviation' ? 'aircraft' : dominantCategory,
+        markerKind: isAviation ? 'aircraft' : (trackKind === 'military' ? 'military' : dominantCategory),
         markerIcon: markerIconForKind(
-          trackKind === 'aviation_military' || trackKind === 'aviation_cargo' || trackKind === 'aviation'
-            ? 'aircraft'
-            : markerKindFromEvent(idMap.get(String(p.eventId)))
+          isAviation ? 'aircraft' : markerKindFromEvent(idMap.get(String(p.eventId)))
         ),
-        label: `${markerIconForKind(markerKindFromEvent(idMap.get(String(p.eventId))))} ${
-          p.label || 'Surveillance node'
-        } · Market Impact ${leadEvent?.market_impact_level || 'Low'}`,
+                      label: p.label || 'Surveillance node',
         previewText: `${p.count > 1 ? `${p.count} clustered signals` : 'Signal'} · ${
           leadEvent?.market_impact_level || 'Low'
         } impact`,
-        color,
+        color: isAviation ? '#FF6D00' : color,
+        htmlLabel: pointLabelHTML(isAviation ? 'aircraft' : trackKind, impactLevel, isNew, isCritical),
+        isCritical,
+        isNew,
+        dataAge: leadEvent?.updated_at 
+          ? Math.round((Date.now() - new Date(leadEvent.updated_at).getTime()) / 60000)
+          : null,
         radius: Math.min(
-          1.45,
-          0.24 +
-            p.count * 0.06 +
+          2.5,
+          0.70 +
+            p.count * 0.10 +
             p.maxSev * 0.05 +
             Math.min(0.18, impactScore / 620) +
             (liveCluster ? 0.07 : 0) +
-            (trackKind === 'aviation' ||
-            trackKind === 'aviation_cargo' ||
-            trackKind === 'aviation_military' ||
-            trackKind === 'military'
-              ? 0.06
-              : 0) +
+            (isAviation ? 0.45 : 0) +
             airImp * 0.34 +
             (categoryFocused ? 0.08 : 0) +
             (hot || freshPriority ? pulseStep * 0.06 : 0) +
             (isSel ? 0.14 : 0) +
-            (lens && inFocus ? 0.1 : 0)
+            (lens && inFocus ? 0.1 : 0) +
+            (isCritical ? 0.2 : 0) // ⭐ Extra size for critical
         ),
         altitude:
-          0.02 +
-          Math.min(0.082, p.count * 0.004 + pulseBoost + (freshPriority ? 0.012 : 0) + (isSel ? 0.018 : 0)) +
+          0.20 +
+          Math.min(0.20, p.count * 0.004 + pulseBoost + (freshPriority ? 0.012 : 0) + (isSel ? 0.018 : 0)) +
           (liveCluster ? 0.014 : 0) +
           (categoryFocused ? 0.012 : 0) +
           (lens && inFocus ? 0.02 : 0) +
-          airImp * 0.028,
+          airImp * 0.028 +
+          (isCritical ? 0.04 : 0), // ⭐ Higher altitude for critical
       };
     });
   }, [events, selectedId, reducedMotion, focusRegion, activeCategory]);
-
+  // ⭐ Sound effects on new/critical events
+  const prevCriticalCount = useRef(0);
+  useEffect(() => {
+    const criticalCount = points.filter(p => p.isCritical).length;
+    if (criticalCount > prevCriticalCount.current && SOUNDS.criticalAlert) {
+      SOUNDS.criticalAlert();
+    }
+    prevCriticalCount.current = criticalCount;
+  }, [points]);
   useEffect(() => {
     if (typeof onDiagnostics !== 'function') return;
     onDiagnostics({
@@ -969,129 +1190,226 @@ useEffect(() => {
     [onGlobeBackground]
   );
 
-  return (
-    <div
-      className={`sv-globe-wrap ${globeReveal ? 'sv-globe-wrap--ready' : ''} ${polygonsData.length ? 'sv-globe-wrap--countries' : ''}`}
-      ref={wrapRef}
-      style={{
-        width: dims.w,
-        height: dims.h,
-        maxWidth: '100%',
-        maxHeight: '100%',
-      }}
-    >
-      <div className="sv-globe-vignette" aria-hidden />
-      <Suspense
-        fallback={
-          <div className="sv-globe-fallback" aria-hidden>
-            <div className="sv-globe-fallback-orbit" />
-            <div className="sv-globe-fallback-ring" />
-            <p className="sv-globe-fallback-label">Loading globe</p>
-          </div>
+   return (
+    <>
+          <style>{`
+        @keyframes criticalPulse {
+          0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.4); }
         }
+        @keyframes markerAppear {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+          70% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+          100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes subtleFloat {
+          0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
+          50% { transform: translate(-50%, -50%) translateY(-3px); }
+        }
+        
+               .sv-globe-hover-preview {
+          position: absolute !important;
+          bottom: 16px !important;
+          left: 16px !important;
+          display: inline-block !important;
+          width: auto !important;
+          max-width: 200px !important;
+          min-width: unset !important;
+          background: rgba(6, 10, 18, 0.94) !important;
+          border: 1px solid rgba(248, 195, 125, 0.25) !important;
+          border-left: 2px solid #ff9933 !important;
+          font-family: 'SF Mono', 'Consolas', 'Monaco', monospace !important;
+          padding: 6px 10px !important;
+          font-size: 10px !important;
+          text-align: left !important;
+          pointer-events: none !important;
+          z-index: 10 !important;
+          border-radius: 2px !important;
+          line-height: 1.3 !important;
+          white-space: normal !important;
+          word-wrap: break-word !important;
+          box-sizing: border-box !important;
+        }
+        
+        .sv-globe-hover-preview__title {
+          display: block;
+          color: #ccddff;
+          font-size: 10px;
+          font-weight: 500;
+          margin: 0 0 2px 0;
+          white-space: normal;
+          word-wrap: break-word;
+        }
+        
+        .sv-globe-hover-preview__copy {
+          display: block;
+          color: #8899aa;
+          font-size: 9px;
+          margin: 0;
+          white-space: normal;
+          word-wrap: break-word;
+        }
+      `}</style>
+      <div
+        className={`sv-globe-wrap ${globeReveal ? 'sv-globe-wrap--ready' : ''} ${polygonsData.length ? 'sv-globe-wrap--countries' : ''}`}
+        ref={wrapRef}
+        style={{
+          width: dims.w,
+          height: dims.h,
+          maxWidth: '100%',
+          maxHeight: '100%',
+           border: 'none',
+          outline: 'none',
+        }}
       >
-        <Globe
-          ref={globeRef}
-          width={dims.w}
-          height={dims.h}
-          backgroundColor={sceneBackground}
-          backgroundImageUrl={null}
-          waitForGlobeReady
-          onGlobeReady={onGlobeReady}
-          globeImageUrl={globeTextureUrl}
-          globeCurvatureResolution={reducedMotion ? 5 : 5.2}
-          bumpImageUrl={null}
-          rendererConfig={{
-            antialias: true,
-            alpha: true,
-            powerPreference: 'high-performance',
-            logarithmicDepthBuffer: true,
-          }}
-          showAtmosphere
-          atmosphereColor={atmosphereColor}
-          atmosphereAltitude={reducedMotion ? atmosphereAltitude * 0.82 : atmosphereAltitude}
-          onGlobeClick={handleGlobeClick}
-          onZoom={handleZoom}
-          heatmapsData={NO_HEATMAPS}
-          hexBinPointsData={useHex ? hexPoints : []}
-          hexBinPointLat="lat"
-          hexBinPointLng="lng"
-          hexBinPointWeight="w"
-          hexAltitude={() => 0.02}
-          hexTopColor={() => 'rgba(234, 169, 96, 0.55)'}
-          hexSideColor={() => 'rgba(234, 169, 96, 0.22)'}
-          hexBinResolution={4}
-          arcsData={arcs}
-          arcStartLat="startLat"
-          arcStartLng="startLng"
-          arcEndLat="endLat"
-          arcEndLng="endLng"
-          arcColor={arcColor}
-          arcAltitude={0.24}
-          arcStroke={0.42}
-          polygonsData={polygonsData}
-          polygonGeoJsonGeometry="geo"
-          polygonCapColor={polygonCapColor}
-          polygonSideColor={polygonSideColor}
-          polygonStrokeColor={polygonStrokeColor}
-          polygonAltitude={polygonAltitude}
-          polygonCapCurvatureResolution={reducedMotion ? 3 : 5}
-          polygonsTransitionDuration={
-            reducedMotion ? 0 : focusIso ? 0 : focusRegion ? 140 : 280
+        <Suspense
+          fallback={
+            <div className="sv-globe-fallback" aria-hidden>
+              <div className="sv-globe-fallback-orbit" />
+              <div className="sv-globe-fallback-ring" />
+              <p className="sv-globe-fallback-label">Loading globe</p>
+            </div>
           }
-          polygonLabel={polygonLabel}
-          onPolygonHover={(poly) => {
-            setHoveredIso(poly && poly.iso ? poly.iso : null);
-          }}
-          onPolygonClick={(poly) => {
-            markSurfacePick();
-            if (poly && poly.iso && onCountryFocus) onCountryFocus(poly.iso);
-          }}
-          pointsData={useHex ? [] : points}
-          pointLat="lat"
-          pointLng="lng"
-          pointColor="color"
-          pointRadius="radius"
-          pointAltitude="altitude"
-          pointLabel={null}
-          pointsMerge={false}
-          pointResolution={reducedMotion ? 10 : 20}
-          onPointClick={(pt) => {
-            markSurfacePick();
-            if (pt && pt.eventId) onSelectEvent(pt.eventId);
-          }}
-          onPointHover={(pt) => {
-            const nextId = pt && pt.eventId ? pt.eventId : null;
-            setHoveredId(nextId);
-            setHoveredPreview(
-              pt
-                ? {
-                    id: nextId,
-                    title: String(pt.label || 'Surveillance node').replace(/<[^>]+>/g, ''),
-                    copy: pt.previewText || 'Hover preview',
-                  }
-                : null
-            );
-            if (typeof onHoverEvent === 'function') onHoverEvent(nextId);
-          }}
-          objectsData={celestialObjectsData}
-          objectLat="lat"
-          objectLng="lng"
-          objectAltitude="alt"
-          objectThreeObject={objectThreeObject}
-          objectsTransitionDuration={reducedMotion ? 0 : 400}
-        />
-      </Suspense>
-      <div className="sv-globe-hover-preview" aria-live="polite">
-        {hoveredPreview ? (
-          <>
-            <span className="sv-globe-hover-preview__title">{hoveredPreview.title}</span>
-            <span className="sv-globe-hover-preview__copy">{hoveredPreview.copy}</span>
-          </>
-        ) : (
-          <span className="sv-globe-hover-preview__copy">Hover markers to preview. Click to pin in side drawer.</span>
-        )}
+        >
+          <Globe
+            ref={globeRef}
+            width={dims.w}
+            height={dims.h}
+            backgroundColor={sceneBackground}
+            backgroundImageUrl={null}
+            waitForGlobeReady
+            onGlobeReady={onGlobeReady}
+            globeImageUrl={globeTextureUrl}
+            globeCurvatureResolution={reducedMotion ? 5 : 5.2}
+            bumpImageUrl={null}
+            globeAutoRotate={autoRotate && !reducedMotion}
+            globeAutoRotateSpeed={0.3}
+            rendererConfig={{
+              antialias: true,
+              alpha: true,
+              powerPreference: 'high-performance',
+              logarithmicDepthBuffer: true,
+            }}
+            showAtmosphere={false}
+            onGlobeClick={(coords, event) => {
+              handleUserInteraction();
+              handleGlobeClick(coords, event);
+            }}
+            onZoom={(pov) => {
+              handleUserInteraction();
+              handleZoom(pov);
+            }}
+            heatmapsData={NO_HEATMAPS}
+            hexBinPointsData={useHex ? hexPoints : []}
+            hexBinPointLat="lat"
+            hexBinPointLng="lng"
+            hexBinPointWeight="w"
+            hexAltitude={() => 0.02}
+            hexTopColor={() => 'rgba(234, 169, 96, 0.55)'}
+            hexSideColor={() => 'rgba(234, 169, 96, 0.22)'}
+            hexBinResolution={4}
+            arcsData={arcs}
+            arcStartLat="startLat"
+            arcStartLng="startLng"
+            arcEndLat="endLat"
+            arcEndLng="endLng"
+            arcColor={arcColor}
+            arcAltitude={0.24}
+            arcStroke={0.42}
+            polygonsData={polygonsData}
+            polygonGeoJsonGeometry="geo"
+            polygonCapColor={polygonCapColor}
+            polygonSideColor={polygonSideColor}
+            polygonStrokeColor={polygonStrokeColor}
+            polygonAltitude={polygonAltitude}
+            polygonCapCurvatureResolution={reducedMotion ? 3 : 5}
+            polygonsTransitionDuration={
+              reducedMotion ? 0 : focusIso ? 0 : focusRegion ? 140 : 280
+            }
+            polygonLabel={polygonLabel}
+            onPolygonHover={(poly) => {
+              setHoveredIso(poly && poly.iso ? poly.iso : null);
+            }}
+            onPolygonClick={(poly) => {
+              markSurfacePick();
+              if (poly && poly.iso && onCountryFocus) onCountryFocus(poly.iso);
+            }}
+            pointsData={useHex ? [] : points}
+            pointLat="lat"
+            pointLng="lng"
+            pointColor="color"
+            pointRadius="radius"
+            pointAltitude="altitude"
+                       pointLabel="htmlLabel"
+            pointsMerge={false}
+            pointResolution={reducedMotion ? 10 : 20}
+            onPointClick={(pt) => {
+              markSurfacePick();
+              if (pt && pt.eventId) onSelectEvent(pt.eventId);
+            }}
+                         onPointHover={(pt, event) => {
+              const nextId = pt && pt.eventId ? pt.eventId : null;
+              setHoveredId(nextId);
+              
+              if (pt && SOUNDS.hover && !hoveredId) {
+                SOUNDS.hover();
+              }
+              
+              if (pt && event) {
+                setHoverPos({ x: event.clientX || 0, y: event.clientY || 0 });
+              }
+              
+              setHoveredPreview(
+                pt
+                  ? {
+                      id: nextId,
+                      icon: pt.markerIcon || '✈',
+                      title: String(pt.label || 'Surveillance node').replace(/<[^>]+>/g, ''),
+                      copy: pt.dataAge != null 
+                        ? `${pt.previewText || 'Hover preview'} · ${pt.dataAge}m ago`
+                        : pt.previewText || 'Hover preview',
+                      isCritical: pt.isCritical,
+                    }
+                  : null
+              );
+              if (typeof onHoverEvent === 'function') onHoverEvent(nextId);
+            }}
+            objectsData={celestialObjectsData}
+            objectLat="lat"
+            objectLng="lng"
+            objectAltitude="alt"
+            objectThreeObject={objectThreeObject}
+            objectsTransitionDuration={reducedMotion ? 0 : 400}
+          />
+        </Suspense>
+               <div aria-live="polite" style={{
+          position: 'absolute',
+          top: '16px',
+          left: '16px',
+          background: 'rgba(6, 10, 18, 0.94)',
+          border: '1px solid rgba(248, 195, 125, 0.25)',
+          borderLeft: '2px solid #ff9933',
+          fontFamily: "'SF Mono', 'Consolas', 'Monaco', monospace",
+          padding: '5px 8px',
+          fontSize: '10px',
+          textAlign: 'left',
+          pointerEvents: 'none',
+          zIndex: 10,
+          borderRadius: '2px',
+          lineHeight: 1.4,
+          whiteSpace: 'nowrap',
+          width: 'fit-content',
+        }}>
+          {hoveredPreview ? (
+            <>
+              <span style={{ color: '#ccddff', fontSize: '10px', fontWeight: 500, whiteSpace: 'nowrap', display: 'block' }}>{hoveredPreview.title}</span>
+              <span style={{ color: '#8899aa', fontSize: '9px', whiteSpace: 'nowrap', display: 'block' }}>{hoveredPreview.copy}</span>
+            </>
+          ) : (
+            <span style={{ color: '#8899aa', fontSize: '9px', whiteSpace: 'nowrap' }}>Hover markers to preview. Click to pin in side drawer.</span>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

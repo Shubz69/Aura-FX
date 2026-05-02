@@ -535,7 +535,14 @@ export default function SurveillancePage() {
         <header className="sv-terminal-masthead" aria-labelledby="sv-terminal-heading">
           <div className="sv-masthead-grid">
             <div className="sv-masthead-brand-block">
-              <span className="sv-terminal-mark" aria-hidden />
+             <span className="sv-terminal-mark" aria-hidden>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+    <circle cx="12" cy="12" r="10" stroke="#f8c37d" strokeWidth="1.2" opacity="0.6" />
+    <circle cx="12" cy="12" r="5" stroke="#f8c37d" strokeWidth="0.8" opacity="0.3" />
+    <circle cx="12" cy="12" r="1.5" fill="#f8c37d" />
+    <line x1="12" y1="12" x2="12" y2="2" stroke="#f8c37d" strokeWidth="0.8" opacity="0.5" />
+  </svg>
+</span>
               <div className="sv-masthead-titles">
                 <p className="sv-masthead-eyebrow">{t('surveillance.eliteSecuredGrid')}</p>
                 <h1 id="sv-terminal-heading" className="sv-terminal-title">
