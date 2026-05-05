@@ -56,23 +56,24 @@ function diagnosticsFromPayload(payload, bars, requestedInterval) {
 
 function chartPixelHeight(wrapEl) {
   const rect = wrapEl?.getBoundingClientRect?.();
-  const fromRect = rect && rect.height > 80 ? Math.floor(rect.height) : 0;
-  if (fromRect) return Math.min(640, Math.max(320, fromRect));
+  if (rect && rect.height > 80) return Math.floor(rect.height);
+  const parent = wrapEl?.parentElement;
+  if (parent) {
+    const parentRect = parent.getBoundingClientRect();
+    if (parentRect.height > 80) return Math.floor(parentRect.height);
+  }
   const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
-  return Math.min(620, Math.max(340, Math.floor(vh * 0.44)));
+  return Math.floor(vh * 0.44);
 }
 
 function chartPixelWidth(wrapEl) {
   let w = wrapEl?.clientWidth || 0;
   if (w < 64) w = wrapEl?.getBoundingClientRect?.().width || 0;
   if (w < 64) w = wrapEl?.parentElement?.clientWidth || 0;
+  if (w < 64) w = wrapEl?.parentElement?.getBoundingClientRect?.().width || 0;
   return Math.max(120, Math.floor(w));
 }
 
-/**
- * Central live market chart — powered by /api/market/chart-history.
- * @param {{ symbol: string, onSelectCandle: (bar: object) => void, onSymbolChange?: (s: string) => void }} props
- */
 export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange }) {
   const { t } = useTranslation();
   const wrapRef = useRef(null);
@@ -143,21 +144,10 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
         setErr(t('operatorIntelligence.liveMarket.noData'));
         return;
       }
-      setPack({
-        bars,
-        levels: data?.levels || null,
-      });
+      setPack({ bars, levels: data?.levels || null });
       const last = bars[bars.length - 1];
       setLastPrice(last && Number.isFinite(last.close) ? String(last.close) : '');
-      const diag = diagnosticsFromPayload({ diagnostics: data?.diagnostics || {} }, bars, requestedInterval);
-      setDiagnostics(diag);
-      console.info('[OperatorIntelligence][ChartHistory]', {
-        symbol: cleanChartSymbol,
-        dataSymbol: cleanDataSymbol,
-        requestedInterval,
-        usedSymbol: data?.usedSymbol || cleanDataSymbol,
-        ...diag,
-      });
+      setDiagnostics(diagnosticsFromPayload({ diagnostics: data?.diagnostics || {} }, bars, requestedInterval));
       setStatus('ready');
     } catch (e) {
       if (e?.name === 'AbortError' || e?.code === 'ERR_CANCELED') return;
@@ -192,15 +182,98 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
     onSymbolChange?.(cleanChartSymbol);
   }, [cleanChartSymbol, onSymbolChange]);
 
+// ── Professional wheel handler ──
+// Ctrl/Cmd + Wheel = Zoom | Shift + Wheel = Pan H | Alt + Wheel = Pan V | Drag = Pan
+useEffect(() => {
+  const wrap = wrapRef.current;
+  if (!wrap || status !== 'ready') return;
+
+  const handleWheel = (e) => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    // ── Ctrl/Cmd + Wheel = Zoom in/out ──
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const timeScale = chart.timeScale();
+      const currentRange = timeScale.getVisibleRange();
+      if (!currentRange) return;
+      
+      const range = currentRange.to - currentRange.from;
+      const mid = (currentRange.from + currentRange.to) / 2;
+      const zoomFactor = e.deltaY < 0 ? 0.88 : 1.12;
+      const newHalfRange = (range * zoomFactor) / 2;
+      
+      timeScale.setVisibleRange({
+        from: mid - newHalfRange,
+        to: mid + newHalfRange,
+      });
+      return;
+    }
+
+    // ── Shift + Wheel = Pan horizontally (scroll through time) ──
+    if (e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const timeScale = chart.timeScale();
+      const currentRange = timeScale.getVisibleRange();
+      if (!currentRange) return;
+      
+      const range = currentRange.to - currentRange.from;
+      const panAmount = range * 0.25 * (e.deltaY > 0 ? 1 : -1);
+      
+      timeScale.setVisibleRange({
+        from: currentRange.from + panAmount,
+        to: currentRange.to + panAmount,
+      });
+      return;
+    }
+
+    // ── Alt/Option + Wheel = Pan vertically (scroll price up/down) ──
+    if (e.altKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Get the main price scale (candlestick series)
+      const priceScale = chart.priceScale('right');
+      if (!priceScale) return;
+      
+      const currentRange = priceScale.getVisibleRange();
+      if (!currentRange) return;
+      
+      const priceRange = currentRange.to - currentRange.from;
+      // Pan 20% of visible price range per scroll tick
+      const panAmount = priceRange * 0.20 * (e.deltaY > 0 ? -1 : 1);
+      
+      priceScale.applyOptions({
+        autoScale: false, // Disable auto-scale when manually panning
+      });
+      
+      priceScale.setVisibleRange({
+        from: currentRange.from + panAmount,
+        to: currentRange.to + panAmount,
+      });
+      return;
+    }
+
+    // Plain wheel = page scroll (do nothing, let it pass)
+  };
+
+  wrap.addEventListener('wheel', handleWheel, { passive: false });
+  
+  return () => {
+    wrap.removeEventListener('wheel', handleWheel);
+  };
+}, [status, tf]);
+
   useLayoutEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap || status !== 'ready' || !pack?.bars || pack.bars.length < 2) {
       if (chartRef.current) {
-        try {
-          chartRef.current.remove();
-        } catch {
-          /* ignore */
-        }
+        try { chartRef.current.remove(); } catch { /* ignore */ }
         chartRef.current = null;
       }
       return undefined;
@@ -223,11 +296,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
       }
 
       if (chartRef.current) {
-        try {
-          chartRef.current.remove();
-        } catch {
-          /* ignore */
-        }
+        try { chartRef.current.remove(); } catch { /* ignore */ }
         chartRef.current = null;
       }
 
@@ -235,14 +304,24 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
       const scaleIv = tfRow?.api || '60';
       const visual = auraChartVisualOptions();
 
-      const chart = createChart(wrapEl, {
-        width: w,
-        height: h,
-        ...visual,
+   const chart = createChart(wrapEl, {
+  width: w,
+  height: h,
+  ...visual,
+  handleScroll: {
+    vertTouchDrag: true,          // ← Enable vertical touch drag
+    horzTouchDrag: true,          // ← Enable horizontal touch drag
+    mouseWheel: false,
+    pressedMouseMove: true,       // ← Enable mouse drag to pan
+  },
+  handleScale: {
+    axisPressedMouseMove: false,
+    mouseWheel: false,
+    pinch: true,
+  },
         layout: {
           ...(visual.layout || {}),
           background: visual.layout?.background || { type: ColorType.Solid, color: '#070b14' },
-          /* Logo cell intercepts pointer events and breaks candle hit-testing / e2e clicks */
           attributionLogo: false,
         },
         timeScale: {
@@ -250,6 +329,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
           ...timeScaleOptionsForInterval(scaleIv),
         },
       });
+
       chartRef.current = chart;
 
       const data = normalizeChartBars(pack.bars);
@@ -268,12 +348,8 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
         priceScaleId: 'vol',
       });
       volSeries.setData(volData);
-      chart.priceScale('vol').applyOptions({
-        scaleMargins: { top: 0.78, bottom: 0 },
-      });
-      candleSeries.priceScale().applyOptions({
-        scaleMargins: { top: 0.06, bottom: 0.22 },
-      });
+      chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.78, bottom: 0 } });
+      candleSeries.priceScale().applyOptions({ scaleMargins: { top: 0.06, bottom: 0.22 } });
 
       const lv = pack.levels || {};
       const lineLevels = [
@@ -293,26 +369,20 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
             lineStyle: 2,
             axisLabelVisible: true,
           });
-        } catch {
-          /* ignore */
-        }
+        } catch { /* ignore */ }
       });
 
       const last = data[data.length - 1];
       if (last) {
         try {
-          candleSeries.setMarkers([
-            {
-              time: last.time,
-              position: 'aboveBar',
-              color: '#e8c468',
-              shape: 'circle',
-              text: String(last.close),
-            },
-          ]);
-        } catch {
-          /* ignore */
-        }
+          candleSeries.setMarkers([{
+            time: last.time,
+            position: 'aboveBar',
+            color: '#e8c468',
+            shape: 'circle',
+            text: String(last.close),
+          }]);
+        } catch { /* ignore */ }
       }
 
       const clickHandler = (param) => {
@@ -342,25 +412,14 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
             let bestD = Math.abs(best.time - tx);
             for (const b of barsRef.current) {
               const d = Math.abs(b.time - tx);
-              if (d < bestD) {
-                best = b;
-                bestD = d;
-              }
+              if (d < bestD) { best = b; bestD = d; }
             }
-            const step = Math.max(
-              60,
-              ...barsRef.current.slice(1, 4).map((b, i) => Math.abs(b.time - barsRef.current[i].time)),
-            );
+            const step = Math.max(60, ...barsRef.current.slice(1, 4).map((b, i) => Math.abs(b.time - barsRef.current[i].time)));
             if (bestD <= step * 2.5) bar = best;
           }
         }
         if (bar) {
-          onSelectCandleRef.current?.({
-            ...bar,
-            symbol: cleanChartSymbol,
-            interval: scaleIv,
-            instrument: symLabel,
-          });
+          onSelectCandleRef.current?.({ ...bar, symbol: cleanChartSymbol, interval: scaleIv, instrument: symLabel });
         }
       };
       chart.subscribeClick(clickHandler);
@@ -376,32 +435,31 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
             bar = barsRef.current.find((b) => b.time === pt.time) || null;
           });
         }
-        const next = formatCandleTooltip({ bar, symbol: cleanChartSymbol, interval: scaleIv });
-        setHoverTooltip(next);
+        setHoverTooltip(formatCandleTooltip({ bar, symbol: cleanChartSymbol, interval: scaleIv }));
       };
       chart.subscribeCrosshairMove(crosshairHandler);
       chart.__oiCrosshairHandler = crosshairHandler;
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          try {
-            chart.timeScale().fitContent();
-          } catch {
-            /* ignore */
-          }
+          try { chart.timeScale().fitContent(); } catch { /* ignore */ }
         });
       });
     };
 
     requestAnimationFrame(() => {
-      requestAnimationFrame(mountChart);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(mountChart);
+      });
     });
 
     ro = new ResizeObserver(() => {
       if (!wrapRef.current || !chartRef.current) return;
       const nw = chartPixelWidth(wrapRef.current);
       const nh = chartPixelHeight(wrapRef.current);
-      chartRef.current.applyOptions({ width: nw, height: nh });
+      if (nw > 50 && nh > 100) {
+        chartRef.current.applyOptions({ width: nw, height: nh });
+      }
     });
     ro.observe(wrap);
 
@@ -413,14 +471,8 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
         try {
           if (c.__oiClickHandler) c.unsubscribeClick(c.__oiClickHandler);
           if (c.__oiCrosshairHandler) c.unsubscribeCrosshairMove(c.__oiCrosshairHandler);
-        } catch {
-          /* ignore */
-        }
-        try {
-          c.remove();
-        } catch {
-          /* ignore */
-        }
+        } catch { /* ignore */ }
+        try { c.remove(); } catch { /* ignore */ }
         chartRef.current = null;
       }
     };
@@ -439,9 +491,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
           ) : null}
         </div>
         <div className="oi-chart-controls">
-          <label className="oi-sr-only" htmlFor="oi-symbol-select">
-            Symbol
-          </label>
+          <label className="oi-sr-only" htmlFor="oi-symbol-select">Symbol</label>
           <input
             className="oi-input oi-input--search"
             type="search"
@@ -485,8 +535,11 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
           </div>
         </div>
       </div>
-      <p className="oi-chart-hint">
-        {t('operatorIntelligence.liveMarket.clickCandle')}
+     <p className="oi-chart-hint">
+  {t('operatorIntelligence.liveMarket.clickCandle')}
+  <span style={{ color: 'rgba(200,210,230,0.4)', marginLeft: 8 }}>
+    — {navigator?.platform?.includes('Mac') ? '⌘' : 'Ctrl'} + scroll zoom · Shift + scroll ↔ · {navigator?.platform?.includes('Mac') ? '⌥' : 'Alt'} + scroll ↕ · drag to pan
+  </span>
         {diagnostics ? (
           <>
             {' '}

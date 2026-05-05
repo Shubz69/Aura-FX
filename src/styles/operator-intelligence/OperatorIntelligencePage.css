@@ -50,6 +50,10 @@
   padding-bottom: 6px;
   border-bottom: 1px solid rgba(212, 175, 55, 0.12);
   flex-shrink: 0;
+  
+  /* ADD: Push hero content below fixed navbar */
+  padding-top: clamp(60px, 8vh, 88px);
+  /* Adjust based on your navbar height */
 }
 
 .oi-eyebrow {
@@ -241,6 +245,9 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  
+  /* ADD: Allow chart to shrink/grow properly */
+  min-height: clamp(380px, 45vh, 580px);
 }
 
 .oi-card--chart-focal {
@@ -249,8 +256,11 @@
     0 0 0 1px rgba(234, 169, 96, 0.12) inset,
     0 0 28px rgba(234, 169, 96, 0.14),
     0 8px 28px rgba(0, 0, 0, 0.35);
+  
+  /* ADD: Make chart card expand */
+  flex: 2 1 auto;
+  min-height: clamp(420px, 50vh, 620px);
 }
-
 .oi-card--calendar {
   flex: 0 0 auto;
   margin-top: 0;
@@ -346,13 +356,21 @@
 .oi-chart-stage {
   position: relative;
   flex: 1 1 auto;
-  min-height: clamp(340px, 42vh, 620px);
+  
+  /* CHANGE: Make min-height more flexible */
+  min-height: clamp(320px, 38vh, 520px);
+  /* was: min-height: clamp(340px, 42vh, 620px); */
+  
   width: 100%;
   border-radius: 8px;
   border: 1px solid rgba(234, 169, 96, 0.22);
   background: rgba(0, 0, 0, 0.35);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45) inset;
   overflow: hidden;
+  
+  /* ADD: Ensure chart fills container */
+  display: flex;
+  flex-direction: column;
 }
 
 .oi-chart-frame {
@@ -363,8 +381,17 @@
   min-height: 280px;
   border-radius: 8px;
   overflow: hidden;
+  
+  /* ADD: Flex for child content */
+  display: flex;
 }
-
+/* ── If using TradingView widget ──────────────────────────── */
+.oi-chart-frame > div,
+.oi-chart-frame iframe {
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1;
+}
 .oi-chart-loading,
 .oi-chart-error {
   position: absolute;
