@@ -14,15 +14,20 @@ import {
   getAuraVolumeColor,
 } from '../../utils/auraChartTheme';
 
+// REPLACE the entire computeChartHeight function:
 function computeChartHeight(containerEl, fillParent, fixedHeight) {
   if (fixedHeight != null && Number.isFinite(Number(fixedHeight))) return Math.max(200, Number(fixedHeight));
+  
   const el = containerEl;
   const ch = el?.clientHeight;
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+  
   if (fillParent) {
-    if (ch && ch >= 200) return Math.min(920, Math.max(340, ch));
-    return Math.min(920, Math.max(400, Math.floor(vh * 0.5)));
+    if (ch && ch >= 200) return ch;  // ← Use actual height, NO max cap (was Math.min(920, ...))
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+    return Math.floor(vh * 0.5);
   }
+  
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
   return Math.min(620, Math.max(320, Math.floor(vh * 0.36)));
 }
 
@@ -159,21 +164,85 @@ export default function LightweightInstrumentChart({
     const h = computeChartHeight(rootRef.current, fillParent, height);
     const intervalNorm = normalizeApiInterval(interval);
     const visual = auraChartVisualOptions();
-    const chart = createChart(
-      wrap,
-      buildAuraChartOptions({
-        ColorType,
-        width: wrap.clientWidth,
-        height: h,
-        attributionLogo: true,
-        ...visual,
-        timeScale: {
-          ...(visual.timeScale || {}),
-          ...timeScaleOptionsForInterval(intervalNorm),
-        },
-      })
-    );
-    chartRef.current = chart;
+const chart = createChart(
+  wrap,
+  buildAuraChartOptions({
+    ColorType,
+    width: wrap.clientWidth,
+    height: h,
+    attributionLogo: true,
+    ...visual,
+    // ── Disable built-in scroll/zoom — we handle it manually ──
+    handleScroll: {
+      vertTouchDrag: true,
+      horzTouchDrag: true,
+      mouseWheel: false,         // ← Plain wheel = page scroll
+      pressedMouseMove: true,    // ← Drag to pan
+    },
+    handleScale: {
+      axisPressedMouseMove: false,
+      mouseWheel: false,         // ← Plain wheel = page scroll
+      pinch: true,               // ← Pinch zoom still works
+    },
+    timeScale: {
+      ...(visual.timeScale || {}),
+      ...timeScaleOptionsForInterval(intervalNorm),
+    },
+  })
+);
+chartRef.current = chart;
+
+// ── ADD: Modifier key wheel handler ──
+const handleWheel = (e) => {
+  const ch = chartRef.current;
+  if (!ch) return;
+
+  // Ctrl/Cmd + Wheel = Zoom
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    e.stopPropagation();
+    const timeScale = ch.timeScale();
+    const currentRange = timeScale.getVisibleRange();
+    if (!currentRange) return;
+    const range = currentRange.to - currentRange.from;
+    const mid = (currentRange.from + currentRange.to) / 2;
+    const zoomFactor = e.deltaY < 0 ? 0.88 : 1.12;
+    const newHalfRange = (range * zoomFactor) / 2;
+    timeScale.setVisibleRange({ from: mid - newHalfRange, to: mid + newHalfRange });
+    return;
+  }
+
+  // Shift + Wheel = Pan horizontally
+  if (e.shiftKey) {
+    e.preventDefault();
+    e.stopPropagation();
+    const timeScale = ch.timeScale();
+    const currentRange = timeScale.getVisibleRange();
+    if (!currentRange) return;
+    const range = currentRange.to - currentRange.from;
+    const panAmount = range * 0.25 * (e.deltaY > 0 ? 1 : -1);
+    timeScale.setVisibleRange({ from: currentRange.from + panAmount, to: currentRange.to + panAmount });
+    return;
+  }
+
+  // Alt + Wheel = Pan vertically
+  if (e.altKey) {
+    e.preventDefault();
+    e.stopPropagation();
+    const priceScale = ch.priceScale('right');
+    if (!priceScale) return;
+    const currentRange = priceScale.getVisibleRange();
+    if (!currentRange) return;
+    const priceRange = currentRange.to - currentRange.from;
+    const panAmount = priceRange * 0.20 * (e.deltaY > 0 ? -1 : 1);
+    priceScale.applyOptions({ autoScale: false });
+    priceScale.setVisibleRange({ from: currentRange.from + panAmount, to: currentRange.to + panAmount });
+    return;
+  }
+  // Plain wheel = page scroll (do nothing)
+};
+wrap.addEventListener('wheel', handleWheel, { passive: false });
+chart.__oiWheelHandler = handleWheel;
 
     const data = bars.map((b) => ({
       time: b.time,
@@ -219,21 +288,29 @@ export default function LightweightInstrumentChart({
       });
     });
 
-    const ro = new ResizeObserver(() => {
-      if (!wrapRef.current || !chartRef.current) return;
-      const w = wrapRef.current.clientWidth;
-      const nextH = computeChartHeight(rootRef.current, fillParent, height);
-      chartRef.current.applyOptions({ width: w, height: nextH });
-    });
-    ro.observe(wrap);
+const ro = new ResizeObserver(() => {
+  if (!wrapRef.current || !chartRef.current) return;
+  const w = wrapRef.current.clientWidth;
+  const nextH = computeChartHeight(rootRef.current, fillParent, height);
+  // Only resize if dimensions actually changed significantly
+  const currentW = chartRef.current.options?.width;
+  const currentH = chartRef.current.options?.height;
+  if (Math.abs(currentW - w) > 2 || Math.abs(currentH - nextH) > 2) {
+    chartRef.current.applyOptions({ width: w, height: nextH });
+  }
+});
+ro.observe(wrap);
 
-    return () => {
-      ro.disconnect();
-      candleSeriesRef.current = null;
-      liveBarRef.current = null;
-      chart.remove();
-      chartRef.current = null;
-    };
+return () => {
+  ro.disconnect();
+  if (chart.__oiWheelHandler) {
+    wrap.removeEventListener('wheel', chart.__oiWheelHandler);
+  }
+  candleSeriesRef.current = null;
+  liveBarRef.current = null;
+  chart.remove();
+  chartRef.current = null;
+};
   }, [bars, status, fillParent, height, interval]);
 
   useEffect(() => {
