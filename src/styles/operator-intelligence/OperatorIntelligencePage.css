@@ -161,7 +161,29 @@
   min-height: 0;
 }
 
+/* REPLACE both media queries with this: */
+
+/* iPad landscape and below — keep 3 columns but shrink */
 @media (max-width: 1199px) {
+  .oi-layout {
+    grid-template-columns: minmax(220px, 280px) minmax(400px, 1fr) minmax(240px, 300px);
+    gap: 6px;
+  }
+  
+  /* Shrink font sizes slightly for iPad */
+  .oi-card__title { font-size: 10px; }
+  .oi-card { padding: 6px 8px; }
+  .oi-eyebrow { font-size: 9px; }
+  .oi-title { font-size: clamp(1rem, 2vw, 1.3rem); }
+  .oi-subtitle { font-size: 10px; }
+  .oi-tf-btn { padding: 4px 6px; font-size: 10px; }
+  .oi-select, .oi-input { font-size: 10px; padding: 5px 8px; }
+  .oi-chart-stage { min-height: clamp(280px, 35vh, 420px); }
+  .oi-feed { max-height: 380px; }
+}
+
+/* Only collapse at tablet portrait (768px and below) */
+@media (max-width: 799px) {
   .oi-layout {
     grid-template-columns: 1fr 1fr;
   }
@@ -170,6 +192,18 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
+  }
+}
+
+/* Single column only for mobile */
+@media (max-width: 599px) {
+  .oi-layout {
+    grid-template-columns: 1fr;
+  }
+  .oi-col--right {
+    grid-column: auto;
+    display: flex;
+    flex-direction: column;
   }
 }
 
