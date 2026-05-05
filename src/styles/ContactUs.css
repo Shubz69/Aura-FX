@@ -1,29 +1,67 @@
 /* ============================================================
-   CONTACT US — AURA TERMINAL™ | ORIGINAL FONT & STYLES - NO WHITE GAPS
+   CONTACT US — AURA TERMINAL™ | GOLD THEME V2
+   Matched to home/explore system: #03020D bg, gold accents
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@200;300;400;500;600;700&display=swap');
 
-/* ── Variables (EXACTLY as your original) ─────────────────── */
+/* ── Variables (Gold Theme) ───────────────────────────────── */
 :root {
-    --c-bg:          #0a0a0a;
-    --c-bg-card:     rgba(255,255,255,0.03);
-    --c-bg-card-h:   rgba(255,255,255,0.055);
-    --c-border:      rgba(255,255,255,0.08);
-    --c-border-h:    rgba(255,255,255,0.22);
-    --c-text:        #ffffff;
-    --c-muted:       rgba(255,255,255,0.5);
-    --c-purple:      rgba(139,92,246,0.8);
-    --c-purple-glow: rgba(139,92,246,0.35);
-    --c-blue:        rgba(99,179,237,0.7);
-    --c-radius:      14px;
-    --c-transition:  0.28s cubic-bezier(0.4,0,0.2,1);
+    /* Core palette */
+    --bg:            #03020D;
+    --bg-card:       rgba(8, 9, 22, 0.52);
+    --bg-card-h:     rgba(12, 14, 32, 0.68);
+    --bg-glass:      rgba(7, 8, 20, 0.44);
+    --bg-glass-h:    rgba(12, 14, 32, 0.60);
+    --border:        rgba(255, 255, 255, 0.072);
+    --border-h:      rgba(255, 255, 255, 0.14);
+
+    /* Gold system */
+    --eaa-core:      #EAA960;
+    --eaa-bright:    #F8C37D;
+    --eaa-warm:      #D48D44;
+    --eaa-deep:      #B06E32;
+    --eaa-soft:      #EABB80;
+    --eaa-pale:      #FDE8C4;
+    --eaa-dim:       rgba(234, 169, 96, 0.32);
+    --eaa-glow:      rgba(234, 169, 96, 0.16);
+    --eaa-soft-glow: rgba(234, 169, 96, 0.07);
+    --eaa-ultra:     rgba(234, 169, 96, 0.030);
+    --eaa-light:     #FFD8A9;
+
+    /* Text */
+    --text:          #FFFFFF;
+    --text-muted:    rgba(200, 196, 232, 0.72);
+    --text-dim:      rgba(178, 175, 218, 0.50);
+
+    /* Shape */
+    --radius:        10px;
+    --radius-lg:     16px;
+    --radius-xl:     22px;
+    --radius-2xl:    30px;
+
+    --transition:    0.26s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-s:  0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    --font:          'Space Grotesk', sans-serif;
+
+    /* Glass system */
+    --glass-bg:      rgba(7, 8, 20, 0.44);
+    --glass-border:  rgba(255, 255, 255, 0.072);
+    --glass-blur:    6px;
+    --glass-sat:     1.04;
+    --glass-shadow:
+        0 4px 20px rgba(0,0,0,0.42),
+        0 1px 0 rgba(255,255,255,0.055) inset,
+        0 0 0 0.5px rgba(255,255,255,0.040) inset;
+
+    /* Gold line */
+    --line-gold: linear-gradient(90deg, transparent, var(--eaa-core) 30%, var(--eaa-bright) 70%, transparent);
 }
 
-/* ── Base (EXACTLY as your original) ──────────────────────── */
+/* ── Base ─────────────────────────────────────────────────── */
 .contact-container,
 .contact-container * {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font);
     box-sizing: border-box;
 }
 
@@ -32,17 +70,18 @@ html, body {
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
-    background: var(--c-bg);
+    background: var(--bg);
     margin: 0;
     padding: 0;
 }
 
-/* ── Scroll Container - FIXED (keeping your original styles) ─ */
+/* ── Scroll Container ─────────────────────────────────────── */
 .contact-container {
     position: relative;
     display: flex;
     flex-direction: column;
-    background: var(--c-bg);
+    background: var(--bg);
+    color: var(--text);
     width: 100%;
     max-width: 100%;
     margin: 0;
@@ -62,7 +101,7 @@ html, body {
     transform: translateY(0);
 }
 
-/* ── Ambient Glow Orbs (your original) ────────────────────── */
+/* ── Ambient Glow Orbs (Gold-tinted) ──────────────────────── */
 .contact-orb {
     position: fixed;
     border-radius: 50%;
@@ -76,8 +115,8 @@ html, body {
     height: 600px;
     top: -100px;
     right: -150px;
-    background: radial-gradient(ellipse, rgba(139,92,246,0.07) 0%, transparent 70%);
-    animation: orbFloat1 8s ease-in-out infinite;
+    background: radial-gradient(ellipse, rgba(234,169,96,0.045) 0%, transparent 70%);
+    animation: orbFloat1 14s ease-in-out infinite;
 }
 
 .contact-orb--2 {
@@ -85,21 +124,21 @@ html, body {
     height: 500px;
     bottom: 0;
     left: -100px;
-    background: radial-gradient(ellipse, rgba(99,179,237,0.05) 0%, transparent 70%);
-    animation: orbFloat2 10s ease-in-out infinite;
+    background: radial-gradient(ellipse, rgba(180,100,50,0.035) 0%, transparent 70%);
+    animation: orbFloat2 18s ease-in-out infinite;
 }
 
 @keyframes orbFloat1 {
     0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(-30px, 30px) scale(1.08); }
+    50% { transform: translate(-30px, 40px) scale(1.1); }
 }
 
 @keyframes orbFloat2 {
     0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(20px, -20px) scale(1.05); }
+    50% { transform: translate(25px, -35px) scale(1.08); }
 }
 
-/* ── Content Wrapper - FIXED (your original structure) ────── */
+/* ── Content Wrapper ──────────────────────────────────────── */
 .contact-content {
     position: relative;
     z-index: 10;
@@ -113,7 +152,7 @@ html, body {
     box-sizing: border-box;
 }
 
-/* ── Header (your original styles) ────────────────────────── */
+/* ── Header ───────────────────────────────────────────────── */
 .contact-header {
     text-align: center;
     margin-bottom: 4rem;
@@ -124,44 +163,49 @@ html, body {
     width: 100%;
 }
 
-/* Eyebrow pill */
+/* Eyebrow pill — Gold like hero-eyebrow */
 .contact-eyebrow {
     display: inline-flex;
     align-items: center;
-    gap: 0.6rem;
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.38em;
-    text-transform: uppercase;
-    color: var(--c-muted);
-    margin-bottom: 1.2rem;
-    padding: 0.45rem 1.2rem;
-    border: 1px solid rgba(139,92,246,0.2);
-    border-radius: 999px;
-    background: rgba(139,92,246,0.05);
+    gap: 0.55rem;
+    margin-bottom: 1.6rem;
+    padding: 0.34rem 0.90rem 0.34rem 0.60rem;
+    background: rgba(234,169,96,0.080);
+    border: 1px solid rgba(234,169,96,0.22);
+    border-radius: 100px;
     backdrop-filter: blur(8px);
-    animation: eyebrowIn 0.8s ease-out 0.2s both;
+    animation: brandFadeIn 1.2s ease-out 0.05s both;
 }
 
 .contact-eyebrow__dot {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: rgba(139,92,246,0.7);
-    animation: dotBlink 2s ease-in-out infinite;
+    background: var(--eaa-core);
+    box-shadow: 0 0 7px var(--eaa-glow);
+    animation: eyebrowPulse 2.2s ease-in-out infinite;
+    flex-shrink: 0;
 }
 
-@keyframes eyebrowIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+.contact-eyebrow-text {
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: var(--eaa-soft);
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
 }
 
-@keyframes dotBlink {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; box-shadow: 0 0 6px rgba(139,92,246,0.8); }
+@keyframes eyebrowPulse {
+    0%,100% { opacity: 0.65; transform: scale(0.85); }
+    50%     { opacity: 1;    transform: scale(1.2); }
 }
 
-/* Main H1: C&S-style gold shimmer — AuraPageTitle.css (h1.aura-page-title) */
+@keyframes brandFadeIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Main H1: Gold shimmer — AuraPageTitle.css (h1.aura-page-title) */
 .contact-header .contact-title.aura-page-title {
     margin: 0 auto 1.25rem;
 }
@@ -171,25 +215,58 @@ html, body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Subtitle (your original) */
+/* Subtitle */
 .contact-subtitle {
     font-size: 0.95rem;
-    color: rgba(255,255,255,0.55);
+    color: var(--text-muted);
     font-weight: 300;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    letter-spacing: 0.02em;
     max-width: 520px;
     line-height: 1.8;
     margin: 0 0 2rem;
     animation: titleIn 0.9s ease-out 0.5s both;
 }
 
-/* Decorative rule — gold line + dot (AuraPageTitle.css .aura-page-title-line) */
+/* Decorative rule — gold line + diamond */
 .contact-header__rule {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-top: 0.5rem;
     animation: titleIn 0.9s ease-out 0.65s both;
 }
 
-/* ── Grid (your original) ─────────────────────────────────── */
+.contact-header__rule::before,
+.contact-header__rule::after {
+    content: '';
+    width: 80px;
+    height: 1px;
+}
+
+.contact-header__rule::before {
+    background: linear-gradient(90deg, transparent, var(--eaa-core));
+}
+
+.contact-header__rule::after {
+    background: linear-gradient(90deg, var(--eaa-warm), transparent);
+}
+
+.contact-header__diamond {
+    width: 6px;
+    height: 6px;
+    background: var(--eaa-core);
+    transform: rotate(45deg);
+    box-shadow: 0 0 10px var(--eaa-glow);
+    animation: diamondPulse 2s ease-in-out infinite;
+}
+
+@keyframes diamondPulse {
+    0%, 100% { transform: rotate(45deg) scale(1); opacity: 1; }
+    50%       { transform: rotate(45deg) scale(1.8); opacity: 0.6; }
+}
+
+/* ── Grid ────────────────────────────────────────────────── */
 .contact-grid {
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
@@ -198,26 +275,43 @@ html, body {
     align-items: start;
 }
 
-/* ── Form Container (your original) ───────────────────────── */
+/* ── Form Container ───────────────────────────────────────── */
 .contact-form-container {
-    background: rgba(255,255,255,0.025);
-    border: 1px solid var(--c-border);
-    border-radius: var(--c-radius);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
     padding: 2.5rem;
-    backdrop-filter: blur(20px);
     position: relative;
     overflow: hidden;
+    box-shadow: var(--glass-shadow);
     animation: slideInLeft 0.9s ease-out 0.4s both;
     width: 100%;
 }
 
-/* Top shimmer line (your original) */
+/* Top shimmer line */
 .contact-form-container::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.5), rgba(99,179,237,0.4), transparent);
+    top: 0; left: 6%; right: 28%; height: 1px;
+    background: linear-gradient(90deg,
+        rgba(255,255,255,0.18) 0%,
+        rgba(234,169,96,0.10) 55%,
+        transparent 100%);
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* Subtle gold glow overlay */
+.contact-form-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top left,
+        rgba(234,169,96,0.045) 0%, transparent 62%);
+    opacity: 0.6;
+    pointer-events: none;
 }
 
 @keyframes slideInLeft {
@@ -228,29 +322,33 @@ html, body {
 .contact-form-header {
     margin-bottom: 2rem;
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--c-border);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 1;
 }
 
 .contact-form-header h2 {
     font-size: 1.3rem;
-    font-weight: 300;
-    color: var(--c-text);
-    letter-spacing: 0.2em;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     margin: 0 0 0.35rem;
 }
 
 .contact-form-header p {
     font-size: 0.78rem;
-    color: var(--c-muted);
+    color: var(--text-muted);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     margin: 0;
 }
 
-/* ── Form Groups (your original) ──────────────────────────── */
+/* ── Form Groups ──────────────────────────────────────────── */
 .form-group {
     margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
 }
 
 .form-group label {
@@ -263,29 +361,30 @@ html, body {
 .label-text {
     font-size: 0.75rem;
     font-weight: 400;
-    color: rgba(255,255,255,0.6);
+    color: var(--text-dim);
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    transition: color var(--c-transition);
+    transition: color var(--transition);
 }
 
 .form-group--active .label-text {
-    color: rgba(139,92,246,0.9);
+    color: var(--eaa-core);
 }
 
 .label-required {
-    color: rgba(139,92,246,0.7);
+    color: var(--eaa-core);
     font-size: 0.75rem;
+    opacity: 0.8;
 }
 
 .label-char-count {
     font-size: 0.72rem;
-    color: var(--c-muted);
+    color: var(--text-dim);
     letter-spacing: 0.06em;
     font-variant-numeric: tabular-nums;
 }
 
-/* Input wrapper + glow effect (your original) */
+/* Input wrapper + glow effect */
 .input-wrapper {
     position: relative;
 }
@@ -293,30 +392,30 @@ html, body {
 .input-glow {
     position: absolute;
     inset: -1px;
-    border-radius: 10px;
+    border-radius: var(--radius);
     background: transparent;
     border: 1px solid transparent;
     pointer-events: none;
-    transition: border-color var(--c-transition), box-shadow var(--c-transition);
+    transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .form-group--active .input-glow {
-    border-color: rgba(139,92,246,0.45);
-    box-shadow: 0 0 20px rgba(139,92,246,0.12), inset 0 0 20px rgba(139,92,246,0.04);
+    border-color: rgba(234,169,96,0.45);
+    box-shadow: 0 0 20px rgba(234,169,96,0.12), inset 0 0 20px rgba(234,169,96,0.04);
 }
 
-/* Inputs (your original) */
+/* Inputs */
 .form-control {
     width: 100%;
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.1);
-    color: var(--c-text);
-    border-radius: 10px;
+    color: var(--text);
+    border-radius: var(--radius);
     padding: 0.85rem 1rem;
     font-size: 0.95rem;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font);
     font-weight: 300;
-    transition: background var(--c-transition), border-color var(--c-transition);
+    transition: background var(--transition), border-color var(--transition);
     resize: none;
 }
 
@@ -328,42 +427,56 @@ html, body {
 .form-control:focus {
     outline: none;
     background: rgba(255,255,255,0.06);
-    border-color: rgba(139,92,246,0.3);
+    border-color: rgba(234,169,96,0.3);
 }
 
-/* ── Submit Button (your original) ────────────────────────── */
+/* ── Submit Button (Gold CTA) ─────────────────────────────── */
 .submit-btn {
     width: 100%;
-    padding: 1rem 2rem;
+    padding: 0.92rem 2.5rem;
     margin-top: 0.5rem;
-    background: linear-gradient(135deg, rgba(139,92,246,0.75) 0%, rgba(99,179,237,0.65) 100%);
-    color: #ffffff;
-    border: none;
-    border-radius: 10px;
-    font-size: 0.88rem;
-    font-weight: 500;
-    font-family: 'Space Grotesk', sans-serif;
-    letter-spacing: 0.2em;
+    font-size: 0.80rem;
+    font-weight: 700;
+    font-family: var(--font);
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     cursor: pointer;
+    border: none;
+    border-radius: var(--radius);
+    color: #08060E;
+    background: linear-gradient(132deg,
+        var(--eaa-pale) 0%,
+        var(--eaa-bright) 28%,
+        var(--eaa-core) 58%,
+        var(--eaa-warm) 100%);
+    box-shadow:
+        0 0 22px rgba(234,169,96,0.22),
+        0 4px 18px rgba(0,0,0,0.50),
+        inset 0 1px 0 rgba(255,255,255,0.30);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
     position: relative;
+    z-index: 1;
     overflow: hidden;
-    transition: transform var(--c-transition), box-shadow var(--c-transition), opacity var(--c-transition);
-    box-shadow: 0 0 28px rgba(139,92,246,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+    transition: all var(--transition);
+}
+
+.submit-btn__text {
+    position: relative;
+    z-index: 2;
 }
 
 .submit-btn__shimmer {
     position: absolute;
-    top: 0; left: -100%;
-    width: 60%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: left 0.5s ease;
+    top: -50%; left: -80%;
+    width: 52%; height: 200%;
+    background: linear-gradient(108deg, transparent, rgba(255,255,255,0.30), transparent);
+    transform: skewX(-22deg);
+    transition: left 0.55s ease;
     pointer-events: none;
+    z-index: 1;
 }
 
 .submit-btn:hover:not(:disabled) .submit-btn__shimmer {
@@ -371,12 +484,15 @@ html, body {
 }
 
 .submit-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 0 44px rgba(139,92,246,0.45), 0 8px 24px rgba(0,0,0,0.4);
+    transform: translateY(-4px);
+    box-shadow:
+        0 0 38px rgba(234,169,96,0.36),
+        0 14px 32px rgba(0,0,0,0.60),
+        inset 0 1px 0 rgba(255,255,255,0.28);
 }
 
 .submit-btn:active:not(:disabled) {
-    transform: translateY(0);
+    transform: translateY(-1px);
 }
 
 .submit-btn:disabled {
@@ -397,17 +513,19 @@ html, body {
     100% { content: '...'; }
 }
 
-/* ── Status Message (your original) ───────────────────────── */
+/* ── Status Message ───────────────────────────────────────── */
 .status-message {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     margin-top: 1.25rem;
     padding: 1rem 1.25rem;
-    border-radius: 10px;
+    border-radius: var(--radius);
     font-size: 0.85rem;
     font-weight: 300;
     letter-spacing: 0.06em;
+    position: relative;
+    z-index: 1;
     animation: fadeInUp 0.4s ease-out both;
 }
 
@@ -445,41 +563,43 @@ html, body {
     border: 1px solid rgba(239,68,68,0.3);
 }
 
-/* ── Direct Email (your original) ─────────────────────────── */
+/* ── Direct Email ─────────────────────────────────────────── */
 .direct-email-option {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     margin-top: 1.5rem;
     padding-top: 1.5rem;
+    position: relative;
+    z-index: 1;
 }
 
 .direct-email-option__line {
     flex: 1;
     height: 1px;
-    background: var(--c-border);
+    background: var(--border);
 }
 
 .direct-email-option p {
     font-size: 0.78rem;
-    color: var(--c-muted);
+    color: var(--text-muted);
     white-space: nowrap;
     margin: 0;
     letter-spacing: 0.06em;
 }
 
 .direct-email-option a {
-    color: rgba(139,92,246,0.85);
+    color: var(--eaa-core);
     text-decoration: none;
-    transition: color var(--c-transition);
+    transition: color var(--transition);
 }
 
 .direct-email-option a:hover {
-    color: #a78bfa;
+    color: var(--eaa-bright);
     text-decoration: underline;
 }
 
-/* ── Info Container (your original) ───────────────────────── */
+/* ── Info Container ───────────────────────────────────────── */
 .contact-info-container {
     display: flex;
     flex-direction: column;
@@ -493,7 +613,7 @@ html, body {
     to { opacity: 1; transform: translateX(0); }
 }
 
-/* ── Info Cards (your original) ───────────────────────────── */
+/* ── Info Cards ───────────────────────────────────────────── */
 .contact-info-cards {
     display: flex;
     flex-direction: column;
@@ -506,37 +626,61 @@ html, body {
     align-items: center;
     gap: 1rem;
     padding: 1.1rem 1.25rem;
-    background: rgba(255,255,255,0.025);
-    border: 1px solid var(--c-border);
-    border-radius: var(--c-radius);
-    backdrop-filter: blur(16px);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
     position: relative;
     overflow: hidden;
-    transition: transform var(--c-transition), border-color var(--c-transition), background var(--c-transition), box-shadow var(--c-transition);
+    box-shadow: var(--glass-shadow);
+    transition: transform var(--transition), border-color var(--transition),
+                background var(--transition), box-shadow var(--transition);
     animation: cardIn 0.6s ease-out both;
     cursor: default;
     width: 100%;
 }
 
-/* Left accent */
+/* Left accent — gold */
 .info-card::before {
     content: '';
     position: absolute;
     left: 0; top: 15%; bottom: 15%;
     width: 2px;
-    background: linear-gradient(180deg, rgba(139,92,246,0) 0%, rgba(139,92,246,0.9) 50%, rgba(99,179,237,0.6) 100%);
+    background: linear-gradient(180deg, transparent, var(--eaa-core), var(--eaa-warm));
+    border-radius: 2px;
     opacity: 0;
-    transition: opacity var(--c-transition);
+    transition: opacity var(--transition), top 0.4s ease, bottom 0.4s ease;
+}
+
+/* Gold hover glow */
+.info-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top left,
+        rgba(234,169,96,0.045) 0%, transparent 62%);
+    opacity: 0;
+    transition: opacity var(--transition);
+    pointer-events: none;
 }
 
 .info-card:hover {
-    transform: translateX(5px);
-    border-color: rgba(139,92,246,0.3);
-    background: rgba(255,255,255,0.04);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    transform: translateX(7px);
+    border-color: rgba(234,169,96,0.18);
+    background: var(--bg-glass-h);
+    box-shadow:
+        0 8px 28px rgba(0,0,0,0.44),
+        -5px 0 16px rgba(234,169,96,0.036);
 }
 
 .info-card:hover::before {
+    opacity: 1;
+    top: 5%;
+    bottom: 5%;
+}
+
+.info-card:hover::after {
     opacity: 1;
 }
 
@@ -549,20 +693,25 @@ html, body {
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    background: rgba(139,92,246,0.1);
-    border: 1px solid rgba(139,92,246,0.2);
+    background: rgba(234,169,96,0.038);
+    border: 1px solid rgba(234,169,96,0.13);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #a78bfa;
+    color: var(--eaa-core);
     font-size: 1rem;
     flex-shrink: 0;
-    transition: background var(--c-transition), border-color var(--c-transition);
+    transition: background var(--transition), border-color var(--transition),
+                box-shadow var(--transition), transform var(--transition);
+    position: relative;
+    z-index: 1;
 }
 
 .info-card:hover .info-card__icon-wrap {
-    background: rgba(139,92,246,0.18);
-    border-color: rgba(139,92,246,0.4);
+    background: rgba(234,169,96,0.090);
+    border-color: rgba(234,169,96,0.30);
+    box-shadow: 0 0 14px rgba(234,169,96,0.10);
+    transform: scale(1.06);
 }
 
 .info-card__body {
@@ -571,11 +720,13 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
+    position: relative;
+    z-index: 1;
 }
 
 .info-card__label {
     font-size: 0.68rem;
-    color: var(--c-muted);
+    color: var(--text-dim);
     letter-spacing: 0.25em;
     text-transform: uppercase;
     font-weight: 400;
@@ -583,17 +734,17 @@ html, body {
 
 .info-card__value {
     font-size: 0.9rem;
-    color: var(--c-text);
+    color: var(--text);
     font-weight: 300;
     text-decoration: none;
-    transition: color var(--c-transition);
+    transition: color var(--transition);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 a.info-card__value:hover {
-    color: #a78bfa;
+    color: var(--eaa-core);
 }
 
 .info-card__tag {
@@ -601,19 +752,21 @@ a.info-card__value:hover {
     font-weight: 500;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: rgba(139,92,246,0.8);
-    background: rgba(139,92,246,0.1);
-    border: 1px solid rgba(139,92,246,0.2);
+    color: var(--eaa-core);
+    background: rgba(234,169,96,0.1);
+    border: 1px solid rgba(234,169,96,0.2);
     border-radius: 999px;
     padding: 0.2rem 0.6rem;
     flex-shrink: 0;
+    position: relative;
+    z-index: 1;
 }
 
-/* ── Map (your original) ──────────────────────────────────── */
+/* ── Map ──────────────────────────────────────────────────── */
 .contact-map {
-    border-radius: var(--c-radius);
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    border: 1px solid var(--c-border);
+    border: 1px solid var(--border);
     background: rgba(255,255,255,0.02);
     position: relative;
     flex: 1;
@@ -626,16 +779,16 @@ a.info-card__value:hover {
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--c-border);
+    border-bottom: 1px solid var(--border);
     font-size: 0.75rem;
-    color: var(--c-muted);
+    color: var(--text-muted);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     background: rgba(255,255,255,0.02);
 }
 
 .contact-map__pin {
-    color: #a78bfa;
+    color: var(--eaa-core);
     font-size: 0.85rem;
 }
 
@@ -656,11 +809,11 @@ a.info-card__value:hover {
     inset: 0;
     pointer-events: none;
     background:
-        linear-gradient(to top, rgba(10,10,10,0.5) 0%, transparent 35%),
-        linear-gradient(to right, rgba(139,92,246,0.04) 0%, transparent 100%);
+        linear-gradient(to top, rgba(3,2,13,0.5) 0%, transparent 35%),
+        linear-gradient(to right, rgba(234,169,96,0.04) 0%, transparent 100%);
 }
 
-/* ── Response Indicator (your original) ───────────────────── */
+/* ── Response Indicator ───────────────────────────────────── */
 .response-indicator {
     display: flex;
     align-items: center;
@@ -668,9 +821,9 @@ a.info-card__value:hover {
     padding: 0.85rem 1.25rem;
     background: rgba(16,185,129,0.05);
     border: 1px solid rgba(16,185,129,0.15);
-    border-radius: var(--c-radius);
+    border-radius: var(--radius);
     font-size: 0.78rem;
-    color: rgba(255,255,255,0.55);
+    color: var(--text-dim);
     letter-spacing: 0.08em;
     width: 100%;
 }
@@ -703,14 +856,14 @@ a.info-card__value:hover {
     50% { opacity: 0; transform: scale(1.8); }
 }
 
-/* ── Shared Animations (your original) ────────────────────── */
+/* ── Shared Animations ────────────────────────────────────── */
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 /* ============================================================
-   RESPONSIVE - FIXED (keeping your original structure)
+   RESPONSIVE
    ============================================================ */
 
 /* Large Tablet */
