@@ -682,3 +682,14 @@
     .form-input     { padding: 13px 16px; font-size: 0.9rem; }
     .login-button   { padding: 14px 20px; font-size: 0.82rem; }
 }
+/* Override SignUp.css old card styles */
+.login-form-container {
+    background: rgba(7, 8, 20, 0.44) !important;
+    backdrop-filter: blur(24px) saturate(1.04) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(1.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.072) !important;
+    box-shadow:
+        0 40px 80px rgba(0, 0, 0, 0.6),
+        0 1px 0 rgba(255, 255, 255, 0.055) inset,
+        0 0 0 0.5px rgba(255, 255, 255, 0.040) inset !important;
+}
