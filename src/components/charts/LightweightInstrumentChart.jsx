@@ -473,9 +473,6 @@ return () => {
         }}
       >
         <span>
-          <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer">
-            Lightweight Charts
-          </a>{' '}
           © TradingView (Apache 2.0) · data delayed
         </span>
         {tradingViewHref ? (
