@@ -613,9 +613,6 @@ useEffect(() => {
       </div>
 
       <div className="oi-chart-foot">
-        <a href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noopener noreferrer">
-          Lightweight Charts
-        </a>
         <span>© TradingView (Apache 2.0)</span>
       </div>
     </div>

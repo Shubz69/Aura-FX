@@ -1186,3 +1186,64 @@ html, body {
     margin-top: 54px !important;
   }
 }
+/* ============================================================
+   iPAD LANDSCAPE — Keep desktop 3-column layouts
+   ============================================================ */
+
+/* 
+   iPad landscape = 1024px wide
+   Desktop layouts work perfectly at this width.
+   Override any premature collapse breakpoints.
+*/
+
+@media (min-width: 768px) and (max-width: 1366px) {
+  
+  /* Operator Intelligence — force 3 columns */
+  .oi-layout {
+    grid-template-columns: minmax(220px, 280px) minmax(400px, 1fr) minmax(240px, 300px) !important;
+    gap: 6px !important;
+  }
+  .oi-col--right {
+    grid-column: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Trader Lab — keep desktop layout */
+  .trader-lab-v2 {
+    grid-template-columns: minmax(240px, 300px) 1fr minmax(260px, 320px) !important;
+  }
+  
+  /* Contact page — keep 2 columns */
+  .contact-grid {
+    grid-template-columns: 1.1fr 0.9fr !important;
+  }
+  .contact-info-cards {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Explore page — keep 2 columns */
+  .explore-main-content {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  
+  /* Any other 3-column layouts */
+  [class*="three-col"],
+  [class*="3-col"] {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  
+  /* Any other 2-column layouts */
+  [class*="two-col"],
+  [class*="2-col"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  /* Slightly compact spacing for iPad */
+  .oi-card {
+    padding: 6px 8px !important;
+  }
+  .oi-card__title {
+    font-size: 10px !important;
+  }
+}
