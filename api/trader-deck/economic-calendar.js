@@ -13,7 +13,8 @@ require('../utils/suppress-warnings');
  *
  * Twelve Data: WebSocket (`wss://ws.twelvedata.com/v1/quotes/price`) streams **quotes only** per official
  * docs — there is **no** economic-calendar WebSocket. This route uses **REST-only** providers (FF/FMP/TE/FRED).
- * Refresh strategy: long TTL when no imminent releases; short TTL ±10m around unreleased events (see below).
+ * Refresh strategy: cool TTL when quiet; short TTL when a release is within ±10m **or** an event is past-due
+ * with no `actual` yet (chase window — see ACTUAL_CHASE_MS / ECONOMIC_CALENDAR_ACTUAL_CHASE_MS).
  *
  * Debug: set env DEBUG_TRADER_DECK_CALENDAR=1 to log ForexFactory ingest skip counts and feed errors.
  */
@@ -23,7 +24,7 @@ const { fetchWithTimeout } = require('./services/fetchWithTimeout');
 const { getSeriesRange, SERIES_IDS } = require('./services/fredService');
 const { getCached, setCached, peekCacheEntry } = require('../cache');
 
-const CACHE_KEY = 'trader-deck:economic-calendar:v9';
+const CACHE_KEY = 'trader-deck:economic-calendar:v10';
 /** Past-only ranges: stable actuals — long cache. */
 const HISTORICAL_RANGE_CACHE_TTL_MS = 4 * 60 * 60 * 1000;
 /** Cool path: full calendar payload when nothing is near release (5–15 min). */
@@ -42,8 +43,14 @@ const SCRAPE_DAY_CACHE_MS = 35 * 1000; // per-day HTML scrape (actuals) — shor
 /** Concurrent identical calendar builds (same cache key) share one provider round-trip. */
 const calendarInflight = new Map();
 
-/** Match client `isEventWaitingForActual` grace — keep short TTL after scheduled time until actual lands. */
-const HOT_GRACE_AFTER_RELEASE_MS = 20 * 60 * 1000;
+/**
+ * After scheduled time, FF/FMP/TE/HTML actuals can lag minutes–hours. Keep adaptive hot TTL
+ * until figures land or this window expires (aligned with client `ACTUAL_CHASE_GRACE_MS`).
+ */
+const ACTUAL_CHASE_MS = Math.min(
+  36 * 60 * 60 * 1000,
+  Math.max(4 * 60 * 60 * 1000, parseInt(process.env.ECONOMIC_CALENDAR_ACTUAL_CHASE_MS || String(24 * 60 * 60 * 1000), 10) || 24 * 60 * 60 * 1000)
+);
 
 function calendarNeedsHotRefresh(events, nowMs = Date.now()) {
   if (!Array.isArray(events)) return false;
@@ -52,7 +59,7 @@ function calendarNeedsHotRefresh(events, nowMs = Date.now()) {
     const ts = typeof ev.timestamp === 'number' && Number.isFinite(ev.timestamp) ? ev.timestamp : null;
     if (ts == null) continue;
     if (Math.abs(ts - nowMs) <= RELEASE_WINDOW_MS) return true;
-    if (nowMs >= ts && nowMs - ts <= HOT_GRACE_AFTER_RELEASE_MS) return true;
+    if (nowMs > ts && nowMs - ts <= ACTUAL_CHASE_MS) return true;
   }
   return false;
 }
@@ -616,10 +623,12 @@ function mergeScrapedHtml(rows, events, dateStr) {
   });
 }
 
-async function scrapeForexFactoryHtmlDay(dateStr) {
+async function scrapeForexFactoryHtmlDay(dateStr, opts = {}) {
   const cacheKey = `trader-deck:ff-scrape:${dateStr}`;
-  const cached = getCached(cacheKey, SCRAPE_DAY_CACHE_MS);
-  if (cached) return cached;
+  if (!opts.bypassCache) {
+    const cached = getCached(cacheKey, SCRAPE_DAY_CACHE_MS);
+    if (cached) return cached;
+  }
 
   const dayParam = dateStr.replace(/-/g, '');
   const url = `https://www.forexfactory.com/calendar?day=${dayParam}`;
@@ -1263,7 +1272,8 @@ async function fetchTradingEconomicsCalendarRange(fromStr, toStr) {
   }
 }
 
-async function fetchHistoricalRange(fromStr, toStr) {
+async function fetchHistoricalRange(fromStr, toStr, opts = {}) {
+  const bypassScrapeCache = !!opts.bypassScrapeCache;
   const dayList = enumerateInclusiveDays(fromStr, toStr);
   const etToday = calendarEtTodayStr();
   const ffDays = Math.max(1, Math.min(14, enumerateInclusiveDays(etToday, toStr >= etToday ? toStr : etToday).length));
@@ -1280,7 +1290,7 @@ async function fetchHistoricalRange(fromStr, toStr) {
       const chunk = dayList.slice(i, i + CHUNK);
       const partial = await Promise.all(
         chunk.map(async (d) => {
-          const rows = await scrapeForexFactoryHtmlDay(d);
+          const rows = await scrapeForexFactoryHtmlDay(d, { bypassCache: bypassScrapeCache });
           return scrapeRowsToEvents(d, rows);
         }),
       );
@@ -1388,7 +1398,7 @@ module.exports = async (req, res) => {
     const providerHint = process.env.TRADING_ECONOMICS_API_KEY ? 'TradingEconomicsRange+FFHTML+FMP' : 'FFHTML+FMP';
 
     const buildRangePayload = async () => {
-      const { events, source } = await fetchHistoricalRange(from, to);
+      const { events, source } = await fetchHistoricalRange(from, to, { bypassScrapeCache: forceRefresh });
       const normalized = normalizeCalendarPayloadRows(events, viewerTimeZone);
       const deduped = dedupeEconomicEvents(normalized);
       const filteredRows = applyQueryFilters(deduped, req.query || {});
@@ -1463,7 +1473,9 @@ module.exports = async (req, res) => {
       }
     }
     const buildDefaultPayload = async () => {
-      const { events, source } = await fetchHistoricalRange(defaultRangeFrom, defaultRangeTo);
+      const { events, source } = await fetchHistoricalRange(defaultRangeFrom, defaultRangeTo, {
+        bypassScrapeCache: forceRefreshRange,
+      });
       const normalized = normalizeCalendarPayloadRows(events, viewerTimeZone);
       const deduped = dedupeEconomicEvents(normalized);
       const filteredRows = applyQueryFilters(deduped, req.query || {}).sort(compareEvents);
@@ -1510,12 +1522,9 @@ module.exports = async (req, res) => {
     imp: parseCsvParam(req.query?.impact).map((s) => normImpact(s)).sort(),
   })}`;
   let { events, source } = await dedupeCalendarInflight(snapshotInflightKey, () =>
-    fetchHistoricalRange(collectionStart, toDay)
+    fetchHistoricalRange(collectionStart, toDay, { bypassScrapeCache: forceRefresh })
   );
-  if (Array.isArray(events) && events.length > 0) {
-    const upcoming = events.filter((ev) => ev && ev.date && ev.date >= etToday);
-    if (upcoming.length > 0) events = upcoming;
-  }
+  // Do NOT strip past days: doing so hid Mon/Tue rows once Wed hit, so released actuals vanished from the feed.
   if (!events || events.length === 0) {
     events = staticFallback();
     source = 'fallback';

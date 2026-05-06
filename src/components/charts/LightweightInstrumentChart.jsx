@@ -8,6 +8,7 @@ import {
   auraCandlestickSeriesOptions,
   auraChartVisualOptions,
 } from '../../lib/charts/lightweightChartData';
+import { chartHistoryPollIntervalMs } from '../../lib/charts/chartLivePoll';
 import {
   AURA_CANDLE_SERIES_OPTIONS,
   buildAuraChartOptions,
@@ -45,6 +46,10 @@ export default function LightweightInstrumentChart({
   height,
   className = 'trader-suite-chart-frame',
   showTradingViewLink = true,
+  /** Periodically refetch OHLC so the last candle stays aligned with the server. */
+  liveRefresh = true,
+  /** Override auto poll interval (ms); 0 disables timed refetch (live quote stream may still update last bar). */
+  pollIntervalMs = null,
   onDataLoaded,
 }) {
   const rootRef = useRef(null);
@@ -54,14 +59,31 @@ export default function LightweightInstrumentChart({
   const liveBarRef = useRef(null);
   const liveEventSourceRef = useRef(null);
   const onDataLoadedRef = useRef(onDataLoaded);
-  const lastQueryKeyRef = useRef('');
   const [status, setStatus] = useState('loading');
   const [errorMessage, setErrorMessage] = useState('');
   const [bars, setBars] = useState(null);
+  const [pollTick, setPollTick] = useState(0);
 
   useEffect(() => {
     onDataLoadedRef.current = onDataLoaded;
   }, [onDataLoaded]);
+
+  useEffect(() => {
+    setPollTick(0);
+  }, [symbol, interval, range, from, to]);
+
+  const resolvedPollMs =
+    pollIntervalMs != null && Number.isFinite(Number(pollIntervalMs))
+      ? Math.max(0, Number(pollIntervalMs))
+      : chartHistoryPollIntervalMs(normalizeApiInterval(interval));
+
+  useEffect(() => {
+    if (!liveRefresh || resolvedPollMs <= 0) return undefined;
+    const id = window.setInterval(() => {
+      setPollTick((n) => n + 1);
+    }, resolvedPollMs);
+    return () => window.clearInterval(id);
+  }, [liveRefresh, resolvedPollMs, symbol, interval]);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,14 +98,12 @@ export default function LightweightInstrumentChart({
     const rangeNorm = String(range || '');
     const fromNorm = String(from || '').trim();
     const toNorm = String(to || '').trim();
-    const queryKey = JSON.stringify({ sym, interval: intervalNorm, range: rangeNorm, from: fromNorm, to: toNorm });
-    if (lastQueryKeyRef.current === queryKey) {
-      return undefined;
+    const bust = pollTick > 0;
+    if (!bust) {
+      setStatus('loading');
+      setBars(null);
     }
-    lastQueryKeyRef.current = queryKey;
-    setStatus('loading');
     setErrorMessage('');
-    setBars(null);
     const controller = new AbortController();
     const timer = setTimeout(() => {
       Api.getMarketChartHistory(sym, {
@@ -92,6 +112,7 @@ export default function LightweightInstrumentChart({
         ...(from ? { from } : {}),
         ...(to ? { to } : {}),
         signal: controller.signal,
+        ...(bust ? { cacheBust: true } : {}),
       })
         .then((res) => {
           if (cancelled) return;
@@ -119,6 +140,7 @@ export default function LightweightInstrumentChart({
               barCount: normalized.length,
               firstBarTime: first?.time,
               lastBarTime: last?.time,
+              pollRefresh: bust,
             });
           }
           if (typeof onDataLoadedRef.current === 'function') {
@@ -151,11 +173,10 @@ export default function LightweightInstrumentChart({
     }, 420);
     return () => {
       cancelled = true;
-      lastQueryKeyRef.current = '';
       controller.abort();
       clearTimeout(timer);
     };
-  }, [symbol, interval, range, from, to]);
+  }, [symbol, interval, range, from, to, pollTick]);
 
   useEffect(() => {
     const wrap = wrapRef.current;

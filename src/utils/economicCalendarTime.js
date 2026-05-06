@@ -125,8 +125,11 @@ export function formatCountdownMs(ms) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+/** How long after release we keep “hot” polling while `actual` is still empty (provider lag). */
+export const ACTUAL_CHASE_GRACE_MS = 24 * 60 * 60 * 1000;
+
 /** Event time passed but actual not in payload yet — keep polling the feed. */
-export function isEventWaitingForActual(ev, nowMs = Date.now(), graceAfterMs = 20 * 60 * 1000) {
+export function isEventWaitingForActual(ev, nowMs = Date.now(), graceAfterMs = ACTUAL_CHASE_GRACE_MS) {
   if (hasActualValue(ev.actual)) return false;
   const ts = parseEventTimestamp(ev);
   if (!ts) return false;

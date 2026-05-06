@@ -68,7 +68,8 @@
   margin: 0;
   font-size: clamp(1.15rem, 2vw, 1.45rem);
   font-weight: 650;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   background: linear-gradient(125deg, #fff 30%, #f8c37d 72%, #eaa960 100%);
   -webkit-background-clip: text;
   background-clip: text;

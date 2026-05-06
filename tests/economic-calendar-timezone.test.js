@@ -204,10 +204,17 @@ function run() {
   );
   assert(
     _test.calendarNeedsHotRefresh(
-      [{ timestamp: nowHot - 25 * 60 * 1000, actual: null }],
+      [{ timestamp: nowHot - 23 * 60 * 60 * 1000, actual: null }],
+      nowHot
+    ) === true,
+    'calendarNeedsHotRefresh true hours after release when actual still missing (chase window)'
+  );
+  assert(
+    _test.calendarNeedsHotRefresh(
+      [{ timestamp: nowHot - 26 * 60 * 60 * 1000, actual: null }],
       nowHot
     ) === false,
-    'calendarNeedsHotRefresh false long after release without actual (outside grace)'
+    'calendarNeedsHotRefresh false long after release without actual (outside chase window)'
   );
 
   console.log('OK economic-calendar-timezone tests');

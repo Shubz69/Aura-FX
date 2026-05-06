@@ -3094,3 +3094,79 @@ body {
   width: 1640px !important;
   max-width: none !important;
 }
+
+/* ── Trader Lab terminal bar: center nav (shared with Saved trades page) ── */
+.tlab-shell-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+  width: 100%;
+  max-width: min(960px, 100%);
+  margin: 0 auto;
+}
+
+.tlab-shell-nav__tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: rgba(220, 230, 255, 0.78);
+  border: 1px solid rgba(140, 175, 255, 0.22);
+  background: rgba(6, 10, 24, 0.55);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+}
+
+.tlab-shell-nav__tab:hover {
+  color: #fff;
+  border-color: rgba(248, 195, 125, 0.45);
+  background: rgba(12, 18, 40, 0.75);
+}
+
+.tlab-shell-nav__tab--active {
+  color: rgba(12, 8, 4, 0.95);
+  border-color: rgba(248, 195, 125, 0.55);
+  background: linear-gradient(125deg, #f8e6c8 0%, #e8c468 42%, #c9923e 100%);
+  box-shadow: 0 0 18px rgba(248, 195, 125, 0.22);
+}
+
+.tlab-saved-view-all {
+  margin-top: 10px;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(140, 175, 255, 0.28);
+  background: rgba(8, 12, 28, 0.65);
+  color: rgba(248, 195, 125, 0.95);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.tlab-saved-view-all:hover {
+  border-color: rgba(248, 195, 125, 0.45);
+  background: rgba(14, 18, 36, 0.85);
+}
+
+.trade-validator-shell .trader-suite-terminal-title--custom {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  color: inherit !important;
+  text-shadow: none !important;
+}

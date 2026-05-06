@@ -66,6 +66,32 @@ function chartPixelHeight(wrapEl) {
   return Math.floor(vh * 0.44);
 }
 
+/** Poll chart-history so the last candle moves with the market; interval scales with timeframe. */
+function chartPollIntervalMs(tfId) {
+  switch (tfId) {
+    case '1m':
+      return 12_000;
+    case '5m':
+      return 18_000;
+    case '15m':
+    case '30m':
+    case '45m':
+      return 32_000;
+    case '1H':
+      return 55_000;
+    case '4H':
+      return 120_000;
+    case '1D':
+      return 240_000;
+    case '1W':
+    case '1mo':
+    case '1y':
+      return 600_000;
+    default:
+      return 55_000;
+  }
+}
+
 function chartPixelWidth(wrapEl) {
   let w = wrapEl?.clientWidth || 0;
   if (w < 64) w = wrapEl?.getBoundingClientRect?.().width || 0;
@@ -116,7 +142,7 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
     rows: filteredInstruments.filter((x) => x.category === category),
   })).filter((group) => group.rows.length > 0);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (loadOpts = {}) => {
     loadSeqRef.current += 1;
     const seq = loadSeqRef.current;
     if (abortRef.current) {
@@ -132,7 +158,9 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
     setPack(null);
     setDiagnostics(null);
     try {
-      const data = await fetchOperatorChartPack(cleanDataSymbol || selectedInstrumentId, tf);
+      const data = await fetchOperatorChartPack(cleanDataSymbol || selectedInstrumentId, tf, {
+        cacheBust: Boolean(loadOpts.cacheBust),
+      });
       if (controller.signal.aborted) return;
       if (seq !== loadSeqRef.current) return;
       const bars = normalizeChartBars(data?.bars);
@@ -171,6 +199,15 @@ export default function LiveMarketView({ symbol, onSelectCandle, onSymbolChange 
       }
     };
   }, [load]);
+
+  useEffect(() => {
+    if (status !== 'ready') return undefined;
+    const ms = chartPollIntervalMs(tf);
+    const id = window.setInterval(() => {
+      load({ cacheBust: true });
+    }, ms);
+    return () => window.clearInterval(id);
+  }, [tf, load, status]);
 
   useEffect(() => {
     if (!symbol) return;

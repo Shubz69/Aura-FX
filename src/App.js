@@ -122,6 +122,7 @@ const ManualMetricsEntryPage = lazy(() => import('./pages/reports/ManualMetricsE
 const ManualMetricsProcessingPage = lazy(() => import('./pages/reports/ManualMetricsProcessingPage'));
 const Affiliation = lazy(() => import('./pages/Affiliation'));
 const TraderLab = lazy(() => import('./pages/TraderLab'));
+const TraderLabSavedTrades = lazy(() => import('./pages/TraderLabSavedTrades'));
 const TraderReplay = lazy(() => import('./pages/TraderReplay'));
 const TraderPlaybook = lazy(() => import('./pages/TraderPlaybook'));
 const MissedTradeReview = lazy(() => import('./pages/MissedTradeReview'));
@@ -427,6 +428,7 @@ function AppRoutes() {
                             <Route path="analytics" element={<AuraAnalytics />} />
                             <Route path="trader-cv" element={<TraderCVTab />} />
                             <Route path="leaderboard" element={<AuraLeaderboard />} />
+                            <Route path="trader-lab/saved-trades" element={<TraderLabSavedTrades />} />
                             <Route path="trader-lab" element={<TraderLab />} />
                             <Route path="missed-trade-review" element={<Navigate to={PLAYBOOK_MISSED_REVIEW_PATH} replace />} />
                             <Route path="trader-playbook" element={<PlaybookRouteOutlet />}>

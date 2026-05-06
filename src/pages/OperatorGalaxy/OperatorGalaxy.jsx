@@ -91,7 +91,7 @@ const PLANETS = [
     depthOpacity: 0.72,
     depthBlur: 0.6,      // px blur for depth haze
     path: '/trader-deck/trade-validator/trader-lab',
-    features: ['Live Markets', 'AI Signals', 'Risk Analysis'],
+    features: ['Live Markets', 'Risk Analysis'],
   },
   {
     id: 'playbook',

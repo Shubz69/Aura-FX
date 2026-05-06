@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import html2canvas from 'html2canvas';
 import TraderSuiteShell from '../components/TraderSuiteShell';
+import TraderLabShellNav from '../components/trader-deck/TraderLabShellNav';
 import { useAuth } from '../context/AuthContext';
 import Api from '../services/Api';
 import { formatWelcomeEyebrow, getUserFirstName } from '../utils/welcomeUser';
@@ -38,8 +39,8 @@ import {
 import { validateMarketDecoderSections } from '../lib/trader-deck/marketDecoderExport';
 import { normalizeApiInterval } from '../lib/charts/lightweightChartData';
 import {
-  TERMINAL_INSTRUMENT_OPTIONS as INSTRUMENTS,
-  TERMINAL_INSTRUMENT_LABEL_TO_VALUE as INSTRUMENT_LABEL_TO_VALUE,
+  TERMINAL_INSTRUMENTS,
+  TERMINAL_INSTRUMENT_CATEGORIES,
   chartSymbolFromDecoded as chartSymbolFromDecodedBase,
   normalizeDecodedSymbol,
 } from '../data/terminalInstruments';
@@ -301,6 +302,54 @@ function displaySymbolFromChartSymbol(chartSymbol) {
   return token || raw;
 }
 
+function TraderLabInstrumentSelect({ value, onChange, decoderExtras, id, ariaLabel }) {
+  const knownValues = new Set();
+  TERMINAL_INSTRUMENTS.forEach((i) => knownValues.add(i.providerSymbol || i.chartSymbol));
+  (decoderExtras || []).forEach((ex) => knownValues.add(ex.value));
+  const orphan = Boolean(value) && !knownValues.has(value);
+  const orphanLabel = (() => {
+    const s = String(value || '');
+    const tok = s.includes(':') ? s.split(':')[1] : s;
+    return tok || s || 'Custom';
+  })();
+  return (
+    <select
+      className="tlab-select"
+      id={id}
+      aria-label={ariaLabel}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      {orphan ? (
+        <optgroup label="Current">
+          <option value={value}>{orphanLabel} (current)</option>
+        </optgroup>
+      ) : null}
+      {TERMINAL_INSTRUMENT_CATEGORIES.map((cat) => (
+        <optgroup key={cat} label={cat}>
+          {TERMINAL_INSTRUMENTS.filter((i) => i.category === cat).map((inst) => {
+            const v = inst.providerSymbol || inst.chartSymbol;
+            return (
+              <option key={inst.id} value={v}>
+                {inst.id} — {inst.label}
+              </option>
+            );
+          })}
+        </optgroup>
+      ))}
+      {(decoderExtras || []).length ? (
+        <optgroup label="Decoder / other">
+          {(decoderExtras || []).map((ex) => (
+            <option key={`ex-${ex.value}`} value={ex.value}>
+              {ex.label}
+            </option>
+          ))}
+        </optgroup>
+      ) : null}
+    </select>
+  );
+}
+
 function BiasPill({ bias }) {
   const b = String(bias || '').toLowerCase();
   let cls = 'tlab-pill-bias tlab-pill-bias--neutral';
@@ -346,10 +395,11 @@ export default function TraderLab() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [playbookSetups, setPlaybookSetups] = useState(PLAYBOOK_SETUP_OPTIONS);
-  const [instrumentOptions, setInstrumentOptions] = useState(INSTRUMENTS);
+  const [decoderInstrumentExtras, setDecoderInstrumentExtras] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [loading, setLoading] = useState(true);
@@ -420,6 +470,17 @@ export default function TraderLab() {
   }, [loading, location.pathname]);
 
   useEffect(() => {
+    if (loading || !sessions.length) return;
+    const sid = searchParams.get('session');
+    if (!sid) return;
+    const session = sessions.find((s) => String(s.id) === String(sid));
+    if (!session) return;
+    setActiveId(session.id);
+    setForm(normalizeSession(session));
+    setSearchParams({}, { replace: true });
+  }, [loading, sessions, searchParams, setSearchParams]);
+
+  useEffect(() => {
     if (loading || decoderImportAppliedRef.current) return;
     let raw = '';
     try {
@@ -452,14 +513,21 @@ export default function TraderLab() {
       ? parsed.symbolUniverse.map((x) => normalizeDecodedSymbol(x)).filter(Boolean)
       : [];
     if (symbolUniverse.length > 0) {
-      const merged = [...INSTRUMENTS];
-      const seen = new Set(merged.map((x) => x.label));
+      const seen = new Set(
+        TERMINAL_INSTRUMENTS.map((x) => String(x.providerSymbol || x.chartSymbol || '').trim()),
+      );
+      const extras = [];
       symbolUniverse.forEach((sym) => {
-        if (seen.has(sym)) return;
-        seen.add(sym);
-        merged.push({ label: sym, value: chartSymbolFromDecoded(sym) });
+        const raw = String(sym || '').trim();
+        if (!raw) return;
+        const v = chartSymbolFromDecoded(sym);
+        if (!v || seen.has(v)) return;
+        seen.add(v);
+        extras.push({ label: raw, value: v });
       });
-      setInstrumentOptions(merged);
+      setDecoderInstrumentExtras(extras);
+    } else {
+      setDecoderInstrumentExtras([]);
     }
     const kln = handoff?.tradeLevels || {};
     const biasRaw = String(handoff?.bias || brief?.instantRead?.bias || '');
@@ -1051,6 +1119,7 @@ export default function TraderLab() {
   terminalSubtitle={t('traderLab.terminalSubtitle')}
   terminalTitlePrefix={null}
   title={t('traderLab.terminalTitle')}
+  terminalCenter={<TraderLabShellNav />}
       description={null}
       stats={loading ? LOADING_TERMINAL_STATS : stats}
       primaryAction={
@@ -1225,8 +1294,8 @@ export default function TraderLab() {
                 {!savedLabRows.length ? (
                   <p className="tlab-saved-empty">No saved labs yet. Save a session to build your archive.</p>
                 ) : (
-                  <div className="tlab-saved-list" role="list" aria-label="Saved Trader Lab sessions">
-                    {savedLabRows.map((row) => (
+                  <div className="tlab-saved-list" role="list" aria-label="Saved Trader Lab sessions (most recent)">
+                    {savedLabRows.slice(0, 3).map((row) => (
                       <div
                         key={row.id}
                         className={`tlab-saved-row${activeId === row.id ? ' tlab-saved-row--active' : ''}`}
@@ -1252,6 +1321,15 @@ export default function TraderLab() {
                     ))}
                   </div>
                 )}
+                {savedLabRows.length > 3 ? (
+                  <button
+                    type="button"
+                    className="tlab-saved-view-all"
+                    onClick={() => navigate('/trader-deck/trade-validator/trader-lab/saved-trades')}
+                  >
+                    View all saved trades ({savedLabRows.length})
+                  </button>
+                ) : null}
               </div>
             </div>
           </aside>
@@ -1263,16 +1341,13 @@ export default function TraderLab() {
                 <div className="tlab-card tlab-card--chart tlab-card--gold tlab-card--focal">
                   <div className="tlab-chart-toolbar tlab-chart-toolbar--terminal">
                     <div className="tlab-chart-toolbar__primary">
-                      <select
-                        className="tlab-select"
+                      <TraderLabInstrumentSelect
                         value={form.chartSymbol}
-                        onChange={(e) => handleInstrumentChange(e.target.value)}
-                        aria-label="Instrument"
-                      >
-                        {instrumentOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
+                        onChange={handleInstrumentChange}
+                        decoderExtras={decoderInstrumentExtras}
+                        id="tlab-chart-instrument"
+                        ariaLabel="Instrument"
+                      />
                       <div>
                         <div className="tlab-hint tlab-hint--tight">Candle timeframe</div>
                         <div className="tlab-tf-group" role="tablist" aria-label="Candle timeframe">
@@ -1466,11 +1541,13 @@ export default function TraderLab() {
               <h3 className="tlab-card__title">Trade plan builder</h3>
               <div className="tlab-field">
                 <label>Instrument</label>
-                <select className="tlab-select" value={form.chartSymbol} onChange={(e) => handleInstrumentChange(e.target.value)}>
-                  {instrumentOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                <TraderLabInstrumentSelect
+                  value={form.chartSymbol}
+                  onChange={handleInstrumentChange}
+                  decoderExtras={decoderInstrumentExtras}
+                  id="tlab-plan-instrument"
+                  ariaLabel="Trade plan instrument"
+                />
               </div>
               <div className="tlab-field-grid">
                 <div className="tlab-field">

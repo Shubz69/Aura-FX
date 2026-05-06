@@ -7,6 +7,7 @@ import {
   timeScaleOptionsForInterval,
   auraCandlestickSeriesOptions,
 } from '../../lib/charts/lightweightChartData';
+import { chartHistoryPollIntervalMs } from '../../lib/charts/chartLivePoll';
 import {
   AURA_AREA_SERIES_OPTIONS,
   AURA_CANDLE_SERIES_OPTIONS,
@@ -149,19 +150,24 @@ export default function MarketDecoderChart({
   const [liveBars, setLiveBars] = useState(null);
   const useLive = Boolean(referenceStyle && String(requestSymbol || '').trim());
 
-  const refetchLive = useCallback(() => {
+  const refetchLive = useCallback((force = false) => {
     const sym = String(requestSymbol || '').trim();
     if (!sym) return;
     const intervalNorm = normalizeApiInterval(candleInterval);
     const queryKey = `${sym}|${intervalNorm}`;
-    if (lastLiveQueryRef.current === queryKey) return;
+    if (!force && lastLiveQueryRef.current === queryKey) return;
+    if (force) lastLiveQueryRef.current = '';
     lastLiveQueryRef.current = queryKey;
     if (liveAbortRef.current) liveAbortRef.current.abort();
     const controller = new AbortController();
     liveAbortRef.current = controller;
     (async () => {
       try {
-        const { data } = await Api.getMarketChartHistory(sym, { interval: intervalNorm, signal: controller.signal });
+        const { data } = await Api.getMarketChartHistory(sym, {
+          interval: intervalNorm,
+          signal: controller.signal,
+          ...(force ? { cacheBust: true } : {}),
+        });
         const b = data?.bars;
         const normalized = Array.isArray(b) ? normalizeChartBars(b) : [];
         if (typeof console !== 'undefined' && console.debug) {
@@ -192,13 +198,24 @@ export default function MarketDecoderChart({
   useEffect(() => {
     if (!useLive) return;
     setLiveBars(null);
-    const t = setTimeout(() => refetchLive(), 380);
+    const t = setTimeout(() => refetchLive(false), 380);
     return () => {
       clearTimeout(t);
       lastLiveQueryRef.current = '';
       if (liveAbortRef.current) liveAbortRef.current.abort();
     };
   }, [useLive, refetchLive]);
+
+  useEffect(() => {
+    if (!useLive) return undefined;
+    const ms = chartHistoryPollIntervalMs(normalizeApiInterval(candleInterval));
+    if (!ms || ms < 8000) return undefined;
+    const id = window.setInterval(() => {
+      lastLiveQueryRef.current = '';
+      refetchLive(true);
+    }, ms);
+    return () => window.clearInterval(id);
+  }, [useLive, refetchLive, candleInterval]);
 
   const seed = seedBars && Array.isArray(seedBars) && seedBars.length >= 2 ? seedBars : null;
   const base = bars && Array.isArray(bars) && bars.length >= 2 ? bars : null;

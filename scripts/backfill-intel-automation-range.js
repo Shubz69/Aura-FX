@@ -14,6 +14,9 @@
  *   node scripts/backfill-intel-automation-range.js --from=2026-03-01
  *   (--to defaults to today in Europe/London; dates run newest → oldest so recent MI fills first.)
  *
+ * Trader Desk daily parity (Mon–Sat outlook + 8-sleeve intel; London Sun → week-open brief only):
+ *   node scripts/backfill-intel-automation-range.js --desk-daily-parity --from=2026-04-26 --to=2026-04-29
+ *
  * Options:
  *   --daily-only       Skip weekly packs
  *   --weekly-only      Skip daily packs
@@ -55,6 +58,8 @@ const {
 } = require('../api/trader-deck/deskBriefKinds');
 const {
   generateAndStoreInstitutionalBriefOnly,
+  generateAndStoreOutlook,
+  generateAndStoreSundayMarketOpenBriefOnly,
   isTraderDeskAutomationConfigured,
 } = require('../api/trader-deck/services/autoBriefGenerator');
 
@@ -72,6 +77,7 @@ function parseArgs() {
     dryRun: false,
     checkEnv: false,
     oldestFirst: false,
+    deskDailyParity: false,
   };
   for (const a of argv) {
     if (a.startsWith('--from=')) out.from = a.slice(7).trim().slice(0, 10);
@@ -84,6 +90,7 @@ function parseArgs() {
     else if (a === '--check-env') out.checkEnv = true;
     else if (a.startsWith('--delay-ms=')) out.delayMs = Math.max(0, Number(a.slice(11)) || 0);
     else if (a === '--oldest-first') out.oldestFirst = true;
+    else if (a === '--desk-daily-parity') out.deskDailyParity = true;
   }
   if (!out.to) {
     out.to = DateTime.now().setZone(TZ).toISODate();
@@ -114,6 +121,30 @@ function jsDateNoonLondon(ymd) {
 function jsDateNoonUtc(ymd) {
   const dt = DateTime.fromISO(`${String(ymd).slice(0, 10)}T12:00:00`, { zone: 'utc' });
   return dt.isValid ? dt.toJSDate() : new Date();
+}
+
+function jsDate0630London(ymd) {
+  const dt = DateTime.fromISO(`${String(ymd).slice(0, 10)}T06:30:00`, { zone: TZ });
+  return dt.isValid ? dt.toJSDate() : new Date();
+}
+
+async function hasOutlookDailyRow(ymd) {
+  const [rows] = await executeQuery(
+    `SELECT 1 FROM trader_deck_outlook WHERE date = ? AND period = 'daily' LIMIT 1`,
+    [ymd]
+  );
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function hasSundayMarketOpenRow(ymd) {
+  const [rows] = await executeQuery(
+    `SELECT 1 FROM trader_deck_briefs
+     WHERE date = ? AND period = 'daily'
+       AND LOWER(TRIM(brief_kind)) = 'aura_sunday_market_open'
+     LIMIT 1`,
+    [ymd]
+  );
+  return Array.isArray(rows) && rows.length > 0;
 }
 
 async function main() {
@@ -154,6 +185,88 @@ async function main() {
       '[backfill] Automation not configured (set PERPLEXITY_API_KEY for real runs). Dry-run does not need it: add --dry-run to preview dates only.'
     );
     process.exit(1);
+  }
+
+  if (opts.deskDailyParity) {
+    let start = DateTime.fromISO(opts.from, { zone: TZ }).startOf('day');
+    const end = DateTime.fromISO(opts.to, { zone: TZ }).startOf('day');
+    if (!start.isValid || !end.isValid) {
+      console.error('Invalid --from / --to');
+      process.exit(1);
+    }
+    if (end < start) {
+      console.error('--from must be <= --to for --desk-daily-parity');
+      process.exit(1);
+    }
+    const days = [];
+    for (let d = start; d <= end; d = d.plus({ days: 1 })) {
+      days.push(d.toISODate());
+    }
+    if (!opts.oldestFirst) days.reverse();
+    console.log('[backfill] desk-daily-parity', opts.from, '→', opts.to, `(${days.length} day(s))`, opts.dryRun ? 'DRY-RUN' : '');
+    const parityResults = [];
+    for (const ymd of days) {
+      const wd = DateTime.fromISO(ymd, { zone: TZ }).weekday;
+      if (wd === 7) {
+        if (!opts.force && !opts.dryRun && (await hasSundayMarketOpenRow(ymd))) {
+          console.log('[backfill] sunday open skip (exists)', ymd);
+          parityResults.push({ ymd, slice: 'sunday_open', skipped: true });
+          continue;
+        }
+        console.log('[backfill] sunday open', ymd, opts.dryRun ? '(dry-run)' : '…');
+        if (opts.dryRun) {
+          parityResults.push({ ymd, slice: 'sunday_open', dryRun: true });
+        } else {
+          const out = await generateAndStoreSundayMarketOpenBriefOnly({
+            runDate: jsDate0630London(ymd),
+            timeZone: TZ,
+          });
+          parityResults.push({ ymd, slice: 'sunday_open', out });
+          console.log('[backfill] sunday open done', ymd, out?.success === false ? out : 'ok');
+        }
+      } else {
+        let outlookOut = null;
+        let intelOut = null;
+        if (!opts.dryRun) {
+          const hasO = await hasOutlookDailyRow(ymd);
+          const c = await countInstitutionalKinds(ymd, 'daily');
+          if (!opts.force && hasO && c >= 8) {
+            console.log('[backfill] daily skip (outlook + 8/8)', ymd);
+            parityResults.push({ ymd, slice: 'daily', skipped: true });
+            if (opts.delayMs) await sleep(opts.delayMs);
+            continue;
+          }
+        }
+        if (opts.dryRun) {
+          console.log('[backfill] daily', ymd, '(dry-run)');
+          parityResults.push({ ymd, slice: 'daily', dryRun: true });
+        } else {
+          const hasO = await hasOutlookDailyRow(ymd);
+          const c = await countInstitutionalKinds(ymd, 'daily');
+          if (opts.force || !hasO) {
+            console.log('[backfill] outlook daily', ymd, '…');
+            outlookOut = await generateAndStoreOutlook({
+              period: 'daily',
+              runDate: jsDate0630London(ymd),
+              timeZone: TZ,
+            });
+          }
+          if (opts.force || c < 8) {
+            console.log('[backfill] institutional daily', ymd, '…');
+            intelOut = await generateAndStoreInstitutionalBriefOnly({
+              period: 'daily',
+              runDate: jsDateNoonLondon(ymd),
+              timeZone: TZ,
+            });
+          }
+          parityResults.push({ ymd, slice: 'daily', outlook: outlookOut, categoryIntelPack: intelOut });
+          console.log('[backfill] daily done', ymd);
+        }
+        if (opts.delayMs) await sleep(opts.delayMs);
+      }
+    }
+    console.log('[backfill] desk-daily-parity summary', JSON.stringify(parityResults.slice(0, 80), null, 0));
+    process.exit(0);
   }
 
   let start = DateTime.fromISO(opts.from, { zone: TZ }).startOf('day');

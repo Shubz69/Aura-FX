@@ -1088,6 +1088,7 @@ const Api = {
             ...(options.range != null ? { range: String(options.range) } : {}),
             ...(options.from != null ? { from: String(options.from) } : {}),
             ...(options.to != null ? { to: String(options.to) } : {}),
+            ...(options.cacheBust ? { _: String(Date.now()) } : {}),
         };
         return dedupeGet(`${API_BASE_URL}/api/market/chart-history`, {
             params,

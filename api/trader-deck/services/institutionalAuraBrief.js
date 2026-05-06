@@ -17,6 +17,7 @@ const {
   CATEGORY_INTELLIGENCE_DIRECTIVES,
 } = require('./briefInstrumentUniverse');
 const { parseJsonFromLlmText, normalizeChatCompletionContent } = require('./institutionalLlmJsonParse');
+const { maybeNotifyBriefAutomationIssue } = require('./briefProviderAlerts');
 
 /**
  * When true, run the eight WFA sleeves sequentially (one DB-heavy LLM sleeve at a time).
@@ -338,6 +339,11 @@ async function callOpenAIJson(systemPrompt, userObj, getAutomationModel, options
     });
     if (!res.ok) {
       const errBody = await res.text().catch(() => '');
+      void maybeNotifyBriefAutomationIssue({
+        httpStatus: res.status,
+        errorText: errBody,
+        source: 'perplexity',
+      }).catch(() => {});
       return {
         ok: false,
         error: `http_${res.status}:${String(errBody).slice(0, 400)}`,

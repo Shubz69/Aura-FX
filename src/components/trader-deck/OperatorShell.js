@@ -13,6 +13,7 @@ const BASE = '/trader-deck/trade-validator';
 // Pages that render WITHOUT the hero title and tab rail
 const CLEAN_PAGES = [
   `${BASE}/trader-lab`,
+  `${BASE}/trader-lab/saved-trades`,
   `${BASE}/trader-playbook`,
 ];
 
@@ -63,7 +64,11 @@ export default function OperatorShell() {
           {isCleanPage && (
             <div className="aura-shell-titles trade-validator-hero-titles trade-validator-hero-titles--clean">
               <h1 className="aura-shell-title aura-shell-title--clean">
-                {location.pathname.includes('trader-lab') ? t('operatorShell.traderLab') : t('operatorShell.tradePlaybook')}
+                {location.pathname.includes('trader-lab/saved-trades')
+                  ? 'Saved trades'
+                  : location.pathname.includes('trader-lab')
+                    ? t('operatorShell.traderLab')
+                    : t('operatorShell.tradePlaybook')}
               </h1>
             </div>
           )}

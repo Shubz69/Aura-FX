@@ -3,7 +3,13 @@
  * Daily: Mon–Sat 00:00 Europe/London — outlook + eight canonical category briefs (PDF pipeline).
  * Weekly: Monday 00:00 UK — eight weekly fundamental briefs (week-ending storage key).
  * Sunday Market Open: London Sunday ~21:00 (env SUNDAY_OPEN_BRIEF_HOUR_LONDON) — single aura_sunday_market_open brief.
+ *
+ * One-shot repair (same auth as cron — Bearer CRON_SECRET or Vercel cron headers):
+ *   GET /api/cron/auto-market-briefs?backfill=1
+ *   Optional: &from=YYYY-MM-DD&to=YYYY-MM-DD (London calendar; default from = latest Sunday ≤ today, to = today).
+ *   At most 14 London days per request to limit runtime and LLM spend.
  */
+const { DateTime } = require('luxon');
 const {
   generateAndStoreOutlook,
   generateAndStoreInstitutionalBriefOnly,
@@ -47,6 +53,88 @@ const handler = async (req, res) => {
       message: 'Automation blocked: PERPLEXITY_API_KEY is required.',
       code: 'PERPLEXITY_API_KEY_REQUIRED',
     });
+  }
+
+  const backfill = req.query?.backfill === '1' || req.query?.backfill === 'true';
+  if (backfill) {
+    const payload = await runTwelveDataCronWork(async () => {
+      resetProviderRequestMeter();
+      const tz = 'Europe/London';
+      const nowLon = DateTime.now().setZone(tz);
+      let fromStr = String(req.query?.from || '').trim().slice(0, 10);
+      let toStr = String(req.query?.to || '').trim().slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(fromStr)) {
+        let d = nowLon.startOf('day');
+        while (d.weekday !== 7) d = d.minus({ days: 1 });
+        fromStr = d.toISODate();
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(toStr)) toStr = nowLon.toISODate();
+      let start = DateTime.fromISO(fromStr, { zone: tz }).startOf('day');
+      let end = DateTime.fromISO(toStr, { zone: tz }).startOf('day');
+      if (!start.isValid || !end.isValid) {
+        return { success: false, message: 'Invalid from/to — use YYYY-MM-DD (Europe/London calendar).' };
+      }
+      if (end < start) {
+        const t = start;
+        start = end;
+        end = t;
+      }
+      const MAX_DAYS = 14;
+      const spanDays = Math.floor(end.diff(start, 'days').days) + 1;
+      if (spanDays > MAX_DAYS) {
+        start = end.minus({ days: MAX_DAYS - 1 });
+      }
+      const results = [];
+      for (let d = start; d <= end; d = d.plus({ days: 1 })) {
+        const ymd = d.toISODate();
+        const runDate = DateTime.fromISO(`${ymd}T06:30:00`, { zone: tz }).toJSDate();
+        const wd = d.weekday;
+        if (wd === 7) {
+          let sundayMarketOpen;
+          try {
+            sundayMarketOpen = await generateAndStoreSundayMarketOpenBriefOnly({
+              runDate,
+              timeZone: tz,
+            });
+          } catch (e) {
+            sundayMarketOpen = { success: false, error: e.message || 'sunday market open brief failed' };
+          }
+          results.push({ ymd, slice: 'sunday_open', sundayMarketOpen });
+        } else {
+          let outlook;
+          let categoryIntelPack;
+          try {
+            outlook = await generateAndStoreOutlook({
+              period: 'daily',
+              runDate,
+              timeZone: tz,
+            });
+          } catch (e) {
+            outlook = { success: false, error: e.message || 'outlook failed' };
+          }
+          try {
+            categoryIntelPack = await generateAndStoreInstitutionalBriefOnly({
+              period: 'daily',
+              runDate,
+              timeZone: tz,
+            });
+          } catch (e) {
+            categoryIntelPack = { success: false, error: e.message || 'intel pack failed' };
+          }
+          results.push({ ymd, slice: 'daily', outlook, categoryIntelPack });
+        }
+        logProviderRequestMeter(`[cron-auto-market-briefs] backfill day ${ymd}`);
+      }
+      logProviderRequestMeter('[cron-auto-market-briefs] backfill invocation total outbound HTTP');
+      return {
+        success: true,
+        backfill: true,
+        from: start.toISODate(),
+        to: end.toISODate(),
+        results,
+      };
+    });
+    return res.status(200).json(payload);
   }
 
   const payload = await runTwelveDataCronWork(async () => {

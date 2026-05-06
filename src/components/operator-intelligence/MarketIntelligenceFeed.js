@@ -9,6 +9,21 @@ function impactClass(impact) {
   return 'oi-impact--low';
 }
 
+function formatFeedTimestamp(iso) {
+  const raw = String(iso || '').trim();
+  if (!raw) return '—';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  const abs = d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+  const diffMs = Date.now() - d.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return `${abs} · just now`;
+  if (mins < 120) return `${abs} · ${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 48) return `${abs} · ${hrs}h ago`;
+  return abs;
+}
+
 /**
  * @param {{ items?: Array<Record<string, unknown>> | null, loading?: boolean }} props
  */
@@ -30,7 +45,9 @@ export default function MarketIntelligenceFeed({ items, loading }) {
           {items.map((row) => (
             <li key={row.id} className="oi-feed-item">
               <div className="oi-feed-item__meta">
-                <time dateTime={row.ts}>{row.ts}</time>
+                <time dateTime={row.ts} title={String(row.ts || '')}>
+                  {formatFeedTimestamp(row.ts)}
+                </time>
                 <span className="oi-feed-cat">{row.category}</span>
                 <span className={`oi-impact-pill ${impactClass(row.impact)}`}>{row.impact}</span>
               </div>

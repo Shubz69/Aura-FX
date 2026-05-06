@@ -42,8 +42,66 @@ export async function fetchBiasEngine() {
   return { ...biasEngineMock };
 }
 
-export async function fetchIntelligenceFeed() {
-  await delay(110);
+const FEED_SOURCE_STRIP_RE = /\s*[-–—]\s*(reuters|bloomberg|forex factory|financial times|wsj|cnbc|yahoo finance|marketwatch)\s*$/i;
+
+function cleanFeedText(v) {
+  return String(v || '')
+    .replace(FEED_SOURCE_STRIP_RE, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function inferFeedImpact(text) {
+  const s = String(text || '').toLowerCase();
+  if (/nfp|cpi|pce|fomc|ecb|boe|boj|rate decision|jobs report|gdp|default|bank failure|geopol|sanctions|war\b/i.test(s)) {
+    return 'High';
+  }
+  if (/fed|earnings|guidance|oil|opec|treasury|yield|inflation|employment|cut|hike|speak/i.test(s)) {
+    return 'Medium';
+  }
+  return 'Low';
+}
+
+function mapNewsArticleToFeedRow(article, idx) {
+  const headline = cleanFeedText(article.headline || article.title || '');
+  const summary = cleanFeedText(article.summary || '');
+  const pub = article.publishedAt || article.publishedDate || null;
+  const ts = pub ? new Date(pub).toISOString() : new Date().toISOString();
+  const slug = `${headline.slice(0, 48)}|${ts}`;
+  const id = `td-news-${idx}-${slug.replace(/[^a-z0-9]+/gi, '').slice(0, 40)}`;
+  const catRaw = String(article.category || 'market').trim() || 'market';
+  const category = catRaw.charAt(0).toUpperCase() + catRaw.slice(1);
+  const blob = `${headline} ${summary}`;
+  const related = Array.isArray(article.related) ? article.related.map((x) => String(x || '').trim()).filter(Boolean) : [];
+  return {
+    id,
+    ts,
+    category,
+    impact: inferFeedImpact(blob),
+    headline: headline || 'Market update',
+    affectedAssets: related.slice(0, 12),
+    aiSummary: (summary || headline).slice(0, 360) || headline,
+    whyItMatters: (summary || headline).slice(0, 260) || 'Liquidity and cross-asset correlations can shift quickly around headlines.',
+    action: 'Trade the reaction with reduced size; confirm with your levels and risk process.',
+  };
+}
+
+/**
+ * Live desk wire via `/api/trader-deck/news` (Finnhub/FMP/Yahoo); falls back to mock if empty/offline.
+ * @param {{ refresh?: boolean }} [opts]
+ */
+export async function fetchIntelligenceFeed(opts = {}) {
+  const refresh = Boolean(opts.refresh);
+  try {
+    const res = await Api.getTraderDeckNews({ refresh });
+    const articles = res?.data?.articles;
+    if (Array.isArray(articles) && articles.length > 0) {
+      return articles.slice(0, 40).map(mapNewsArticleToFeedRow);
+    }
+  } catch {
+    /* use mock */
+  }
+  await delay(80);
   return intelligenceFeedMock.map((r) => ({ ...r }));
 }
 
@@ -70,8 +128,8 @@ export async function fetchActionSummary() {
   return { ...actionSummaryMock };
 }
 
-export async function fetchOperatorChartPack(symbol, timeframeId) {
-  await delay(60);
+export async function fetchOperatorChartPack(symbol, timeframeId, opts = {}) {
+  if (!opts.cacheBust) await delay(60);
   const normalized = normalizeSymbol(symbol);
   const inst = getInstrumentById(normalized) || getInstrumentByChartSymbol(symbol);
   const cleanChartSymbol = inst?.chartSymbol || chartSymbolFromId(normalized || symbol);
@@ -113,6 +171,7 @@ export async function fetchOperatorChartPack(symbol, timeframeId) {
       const response = await Api.getMarketChartHistory(symTry, {
         interval: requestedInterval,
         ...(chartAbort ? { signal: chartAbort } : {}),
+        ...(opts.cacheBust ? { cacheBust: true } : {}),
       });
       const payload = response?.data || {};
       const normalizedBars = normalizeChartBars(payload?.bars);

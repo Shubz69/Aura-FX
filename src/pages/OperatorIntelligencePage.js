@@ -11,7 +11,10 @@ import MarketImpactCalendar from '../components/operator-intelligence/MarketImpa
 import ActionSummaryCard from '../components/operator-intelligence/ActionSummaryCard';
 import OperatorWatchlists from '../components/operator-intelligence/OperatorWatchlists';
 import MarketWatchPanel from '../components/operator-intelligence/MarketWatchPanel';
-import { fetchOperatorIntelligencePageBundle } from '../services/operatorIntelligenceAdapter';
+import {
+  fetchOperatorIntelligencePageBundle,
+  fetchIntelligenceFeed,
+} from '../services/operatorIntelligenceAdapter';
 import { DEFAULT_TERMINAL_CHART_SYMBOL } from '../data/terminalInstruments';
 import '../styles/operator-intelligence/OperatorIntelligencePage.css';
 
@@ -48,6 +51,28 @@ export default function OperatorIntelligencePage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (pageState !== 'ready') return undefined;
+    let cancelled = false;
+    const refreshFeed = async (forceProvider) => {
+      try {
+        const rows = await fetchIntelligenceFeed({ refresh: forceProvider });
+        if (!cancelled && Array.isArray(rows) && rows.length > 0) {
+          setBundle((b) => (b ? { ...b, feed: rows } : null));
+        }
+      } catch {
+        /* keep existing feed */
+      }
+    };
+    const frequent = window.setInterval(() => refreshFeed(false), 120_000);
+    const bustCache = window.setInterval(() => refreshFeed(true), 600_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(frequent);
+      window.clearInterval(bustCache);
+    };
+  }, [pageState]);
 
   const onSelectCandle = useCallback((bar) => {
     setSelectedBar(bar);

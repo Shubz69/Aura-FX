@@ -2802,9 +2802,10 @@ async function shouldRunIntelPackCatchUp({ now = new Date(), period, timeZone = 
   const hh = Number(map.hour);
   const mm = Number(map.minute);
   const wd = String(map.weekday || '').toLowerCase();
-  /** London: a few fixed slots per day (Vercel cron runs every five minutes). */
+  /** London: multiple slots per day (cron often every 5m) — incomplete packs catch up faster after missed runs. */
   if (normalizedPeriod === 'daily') {
-    return (hh === 6 || hh === 12 || hh === 18) && mm < 20;
+    const catchHours = new Set([0, 1, 2, 6, 7, 9, 12, 13, 15, 18, 19, 21, 22]);
+    return catchHours.has(hh) && mm < 25;
   }
   /** Weekly: retry Mon–Thu morning after Monday 00:00 generation window. */
   if (normalizedPeriod === 'weekly') {

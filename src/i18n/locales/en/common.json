@@ -2114,7 +2114,7 @@
       "loadFailed": "Unable to load operator intelligence."
     },
     "hero": {
-      "eyebrow": "Aurora Terminal",
+      "eyebrow": "AURA TERMINAL",
       "title": "Operator Intelligence",
       "subtitle": "Compress the tape into decisions: what is happening, why, and what to do now."
     },
@@ -2152,7 +2152,7 @@
     },
     "feed": {
       "title": "Market intelligence feed",
-      "subtitle": "Curated macro — not a generic news wire.",
+      "subtitle": "Live desk headlines (refreshes automatically from the same wire as Trader Desk news).",
       "loading": "Loading feed…",
       "none": "No intelligence rows.",
       "affectedAssets": "Affected assets",

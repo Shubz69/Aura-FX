@@ -22,6 +22,8 @@ export default function TraderSuiteShell({
   variant,
   /** When variant is terminal, use Aura Analysis–style header (premium dashboard) instead of compact terminal bar */
   terminalPresentation = 'classic',
+  /** Replaces center "Aura Terminal" title on terminal bar (e.g. Trader Lab nav pills). */
+  terminalCenter = null,
   children,
 }) {
   const { pathname } = useLocation();
@@ -35,8 +37,6 @@ export default function TraderSuiteShell({
     return undefined;
   };
 
-// In TraderSuiteShell.js, modify the terminalChrome section (around line 30-50)
-
 const terminalChrome = (
   <section className="trader-suite-panel trader-suite-shell trader-suite-shell--terminal">
     <div className="trader-suite-terminal-bar">
@@ -46,8 +46,8 @@ const terminalChrome = (
           <div className="trader-suite-terminal-subtitle">{terminalSubtitle}</div>
         ) : null}
       </div>
-      <div className="trader-suite-terminal-title">
-        Aura Terminal™
+      <div className="trader-suite-terminal-title trader-suite-terminal-title--custom">
+        {terminalCenter || <span className="trader-suite-terminal-title-text">AURA TERMINAL™</span>}
       </div>
       <div className="trader-suite-terminal-actions">
         {primaryAction}
@@ -83,7 +83,6 @@ const terminalChrome = (
 );
 
   /** Aura dashboard: same page chrome as Overview / Performance — no nested Trader Suite glass panel */
- /** Aura dashboard: same page chrome as Overview / Performance — no nested Trader Suite glass panel */
 const auraDashboardTerminal = (
   <div className="aura-db-replay-page">
     <header className="aura-db-replay-header">
