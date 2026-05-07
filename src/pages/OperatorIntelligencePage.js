@@ -80,7 +80,7 @@ export default function OperatorIntelligencePage() {
   }, []);
 
   return (
-    <AuraTerminalThemeShell bodyClassName="oi-terminal-body">
+   <AuraTerminalThemeShell bodyClassName="oi-terminal-body" key="oi-shell">
       <div className="oi-page">
         <header className="oi-hero">
           <div className="oi-hero__text">
@@ -134,5 +134,6 @@ export default function OperatorIntelligencePage() {
         interval={selectedBar?.interval || '60'}
       />
     </AuraTerminalThemeShell>
+    
   );
 }
