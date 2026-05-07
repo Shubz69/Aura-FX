@@ -1086,7 +1086,10 @@ export default function SurveillanceGlobe({
       return isAviation && e.lat != null && e.lng != null;
     });
     
-    aviationEvents.forEach((ev, index) => {
+    // Only process first 5 aviation events for cleaner display
+    const limitedEvents = aviationEvents.slice(0, 5);
+    
+    limitedEvents.forEach((ev, index) => {
       const countries = ev.countries || [];
       const originCountry = countries[0];
       const destCountry = countries[1];
@@ -1096,21 +1099,27 @@ export default function SurveillanceGlobe({
         const dest = SURV_ISO_CENTROID[destCountry];
         
         if (origin && dest) {
-          const aircraftCount = Math.min(3, 1 + Math.floor((ev.severity || 1) / 2));
+          const maxPerRoute = Math.min(2, 1 + Math.floor((ev.severity || 1) / 3));
           
-          for (let i = 0; i < aircraftCount; i++) {
-            const progress = (Date.now() * 0.00001 + i * 0.33) % 1;
+          for (let i = 0; i < maxPerRoute; i++) {
+            const progress = (Date.now() * 0.00001 + i * 0.5) % 1;
+            
+            const jitter = 0.8;
+            const adjOriginLat = origin[0] + (Math.random() - 0.5) * jitter;
+            const adjOriginLng = origin[1] + (Math.random() - 0.5) * jitter;
+            const adjDestLat = dest[0] + (Math.random() - 0.5) * jitter;
+            const adjDestLng = dest[1] + (Math.random() - 0.5) * jitter;
             
             flights.push({
               id: `flight-${ev.id}-${i}`,
               eventId: ev.id,
-              originLat: origin[0],
-              originLng: origin[1],
-              destLat: dest[0],
-              destLng: dest[1],
+              originLat: adjOriginLat,
+              originLng: adjOriginLng,
+              destLat: adjDestLat,
+              destLng: adjDestLng,
               progress,
-              speed: 0.0003 + Math.random() * 0.0002,
-              altitude: 0.15 + i * 0.05,
+              speed: 0.0002 + Math.random() * 0.00015,
+              altitude: 0.2 + i * 0.12,
               severity: ev.severity || 1,
               isMilitary: eventTrackKind(ev).includes('military'),
               callsign: `${originCountry}${destCountry}${String(index).padStart(3, '0')}`,
@@ -1119,11 +1128,12 @@ export default function SurveillanceGlobe({
             });
           }
         }
-      } else if (ev.lat && ev.lng) {
+      } else if (ev.lat && ev.lng && flights.length < 3) {
         const holdingLat = ev.lat;
         const holdingLng = ev.lng;
-        const offsetLat = holdingLat + (Math.random() - 0.5) * 2;
-        const offsetLng = holdingLng + (Math.random() - 0.5) * 2;
+        const spreadFactor = 5.0;
+        const offsetLat = holdingLat + (Math.random() - 0.5) * spreadFactor;
+        const offsetLng = holdingLng + (Math.random() - 0.5) * spreadFactor;
         
         flights.push({
           id: `flight-hold-${ev.id}`,
@@ -1133,8 +1143,8 @@ export default function SurveillanceGlobe({
           destLat: offsetLat,
           destLng: offsetLng,
           progress: Math.random(),
-          speed: 0.0001 + Math.random() * 0.0001,
-          altitude: 0.12,
+          speed: 0.0001,
+          altitude: 0.15,
           severity: ev.severity || 1,
           isMilitary: eventTrackKind(ev).includes('military'),
           callsign: `HOLD${String(index).padStart(3, '0')}`,
@@ -1144,7 +1154,7 @@ export default function SurveillanceGlobe({
       }
     });
     
-    return flights.slice(0, 20);
+    return flights.slice(0, 6);  // Max 6 aircraft total
   }, [events]);
 
    const points = useMemo(() => {
